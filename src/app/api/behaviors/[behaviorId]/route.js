@@ -19,7 +19,7 @@ export async function PUT(request, context) {
     }
 
     const params = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       Item: {
         partitionKey: `USER#${username}`,
         sortKey: `BEHAVIOR#${behaviorId}`,
@@ -50,7 +50,7 @@ export async function DELETE(request, context) {
 
     // Fetch associated activities
     const activitiesParams = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       KeyConditionExpression: 'partitionKey = :pk AND begins_with(sortKey, :sk)',
       ExpressionAttributeValues: {
         ':pk': `USER#${username}`,
@@ -62,7 +62,7 @@ export async function DELETE(request, context) {
 
     for (const activity of activities) {
       const deleteParams = {
-        TableName: 'BetterKidData',
+        TableName: 'betterkid_v2',
         Key: {
           partitionKey: activity.partitionKey,
           sortKey: activity.sortKey,
@@ -73,7 +73,7 @@ export async function DELETE(request, context) {
 
     // Fetch behavior to get partitionKey
     const behaviorParams = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       KeyConditionExpression: 'partitionKey = :pk AND sortKey = :sk',
       ExpressionAttributeValues: {
         ':pk': `USER#${username}`,
@@ -88,7 +88,7 @@ export async function DELETE(request, context) {
     }
 
     const deleteParams = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       Key: {
         partitionKey: behavior.partitionKey,
         sortKey: `BEHAVIOR#${behaviorId}`,

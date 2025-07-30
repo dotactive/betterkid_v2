@@ -19,7 +19,7 @@ export async function PUT(request, { params }) {
     }
     
     const dynamoParams = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       Item: {
         partitionKey: `ACTIVITY#${activityId}`,
         sortKey: 'DETAILS',
@@ -48,7 +48,7 @@ export async function DELETE(_request, { params }) {
     }
 
     const activityData = await dynamoDb.send(new ScanCommand({
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       FilterExpression: 'activityId = :id',
       ExpressionAttributeValues: { ':id': activityId },
     }));
@@ -59,7 +59,7 @@ export async function DELETE(_request, { params }) {
     }
 
     const deleteParams = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       Key: {
         partitionKey: activity.partitionKey,
         sortKey: activity.sortKey,

@@ -5,7 +5,7 @@ import dynamoDb from '@/lib/aws-config';
 export async function GET() {
   try {
     const data = await dynamoDb.send(new ScanCommand({
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       Limit: 1
     }));
 

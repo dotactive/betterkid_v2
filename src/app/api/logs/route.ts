@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     }
 
     const params = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       KeyConditionExpression: 'partitionKey = :pk AND begins_with(sortKey, :sk)',
       ExpressionAttributeValues: {
         ':pk': `USER#${username}`,

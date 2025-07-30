@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     }
 
     const params = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       Key: marshall({
         partitionKey: `USER#${username}`,
         sortKey: 'ACCOUNT#balance',
@@ -54,7 +54,7 @@ export async function PUT(request: Request) {
 
     // Step 1: Fetch existing balance
     const getParams = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       Key: marshall({ partitionKey, sortKey }),
     };
     const { Item } = await dynamoDb.send(new GetItemCommand(getParams));
@@ -63,7 +63,7 @@ export async function PUT(request: Request) {
     // Step 2: Update balance
     const updatedBalance = parseFloat(balance.toFixed(2));
     const putParams = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       Item: marshall({ partitionKey, sortKey, balance: updatedBalance }),
     };
     await dynamoDb.send(new PutItemCommand(putParams));
@@ -73,7 +73,7 @@ export async function PUT(request: Request) {
     const timestamp = new Date().toISOString();
     const logId = `${Date.now()}`; // or use uuid
     const logParams = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       Item: marshall({
         partitionKey,
         sortKey: `BALANCELOG#${logId}`,

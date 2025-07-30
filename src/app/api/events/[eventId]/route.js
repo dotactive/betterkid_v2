@@ -14,7 +14,7 @@ export async function PUT(request, context) {
 
     // Find partitionKey via scan (assumes eventId is unique)
     const scanRes = await dynamoDb.send(new ScanCommand({
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       FilterExpression: 'eventId = :eventId',
       ExpressionAttributeValues: {
         ':eventId': eventId,
@@ -27,7 +27,7 @@ export async function PUT(request, context) {
     }
 
     const paramsToPut = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       Item: {
         partitionKey: existing.partitionKey,
         sortKey: existing.sortKey,
@@ -53,7 +53,7 @@ export async function DELETE(_request, context) {
     const { eventId } = context.params;
 
     const scanRes = await dynamoDb.send(new ScanCommand({
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       FilterExpression: 'eventId = :eventId',
       ExpressionAttributeValues: {
         ':eventId': eventId,
@@ -66,7 +66,7 @@ export async function DELETE(_request, context) {
     }
 
     const deleteParams = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       Key: {
         partitionKey: item.partitionKey,
         sortKey: item.sortKey,

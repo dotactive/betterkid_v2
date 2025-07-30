@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     }
 
     const params = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       KeyConditionExpression: 'partitionKey = :pk AND sortKey = :sk',
       ExpressionAttributeValues: {
         ':pk': `USER#${username}`,

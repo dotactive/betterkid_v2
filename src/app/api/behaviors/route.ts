@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     }
 
     const params = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       FilterExpression: 'partitionKey = :pk AND begins_with(sortKey, :sk)',
       ExpressionAttributeValues: {
         ':pk': `USER#${username}`,
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
 
     const behaviorId = uuidv4();
     const params = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       Item: {
         partitionKey: `USER#${username}`,
         sortKey: `BEHAVIOR#${behaviorId}`,

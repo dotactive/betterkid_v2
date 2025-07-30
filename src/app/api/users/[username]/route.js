@@ -14,7 +14,7 @@ export async function DELETE(_request, context) {
     }
 
     const deleteParams = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       Key: {
         partitionKey: `USER#${username}`,
         sortKey: 'METADATA',

@@ -15,7 +15,7 @@ interface User {
 export async function GET() {
   try {
     const params = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       FilterExpression: 'begins_with(partitionKey, :pk) AND sortKey = :sk',
       ExpressionAttributeValues: {
         ':pk': 'USER#',
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     const userId = randomUUID();
 
     const params = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       Item: {
         partitionKey: `USER#${username}`,
         sortKey: 'METADATA',

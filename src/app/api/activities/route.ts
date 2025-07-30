@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     }
 
     const params = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       FilterExpression: 'begins_with(sortKey, :sk)',
       ExpressionAttributeValues: {
         ':sk': `BEHAVIOR#${behaviorId}#ACTIVITY#`,
@@ -61,14 +61,14 @@ export async function POST(request: Request) {
 
     // Fetch behavior to get username
     const behaviorParams = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       Key: {
         partitionKey: `USER#unknown`, // Will be updated
         sortKey: `BEHAVIOR#${behaviorId}`,
       },
     };
     const behaviorData = await dynamoDb.send(new ScanCommand({
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       FilterExpression: 'sortKey = :sk',
       ExpressionAttributeValues: { ':sk': `BEHAVIOR#${behaviorId}` },
     }));
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
 
     const activityId = uuidv4();
     const params = {
-      TableName: 'BetterKidData',
+      TableName: 'betterkid_v2',
       Item: {
         partitionKey: behavior.partitionKey,
         sortKey: `BEHAVIOR#${behaviorId}#ACTIVITY#${activityId}`,
