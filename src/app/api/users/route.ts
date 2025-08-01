@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     const params = {
       TableName: 'betterkid_v2',
       Item: {
-        partitionKey: `USER#${username}`,
+        partitionKey: `USER#${userId}`,
         sortKey: 'METADATA',
         userId,
         username,

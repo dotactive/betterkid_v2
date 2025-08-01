@@ -12,16 +12,16 @@ export async function PUT(request, context) {
     }
 
     const body = await request.json();
-    const { username, behaviorName, bannerImage, thumbImage } = body;
+    const { userId, behaviorName, bannerImage, thumbImage } = body;
 
-    if (!username || !behaviorName || typeof behaviorName !== 'string' || behaviorName.trim() === '') {
-      return NextResponse.json({ error: 'Username and non-empty behavior name are required' }, { status: 400 });
+    if (!userId || !behaviorName || typeof behaviorName !== 'string' || behaviorName.trim() === '') {
+      return NextResponse.json({ error: 'UserId and non-empty behavior name are required' }, { status: 400 });
     }
 
     const params = {
       TableName: 'betterkid_v2',
       Item: {
-        partitionKey: `USER#${username}`,
+        partitionKey: `USER#${userId}`,
         sortKey: `BEHAVIOR#${behaviorId}`,
         behaviorId,
         behaviorName: behaviorName.trim(),
@@ -46,14 +46,14 @@ export async function DELETE(request, context) {
       return NextResponse.json({ error: 'Behavior ID is required' }, { status: 400 });
     }
 
-    const username = request.headers.get('x-username') || '';
+    const userId = request.headers.get('x-userid') || '';
 
     // Fetch associated activities
     const activitiesParams = {
       TableName: 'betterkid_v2',
       KeyConditionExpression: 'partitionKey = :pk AND begins_with(sortKey, :sk)',
       ExpressionAttributeValues: {
-        ':pk': `USER#${username}`,
+        ':pk': `USER#${userId}`,
         ':sk': `BEHAVIOR#${behaviorId}#ACTIVITY#`,
       },
     };
@@ -76,7 +76,7 @@ export async function DELETE(request, context) {
       TableName: 'betterkid_v2',
       KeyConditionExpression: 'partitionKey = :pk AND sortKey = :sk',
       ExpressionAttributeValues: {
-        ':pk': `USER#${username}`,
+        ':pk': `USER#${userId}`,
         ':sk': `BEHAVIOR#${behaviorId}`,
       },
     };

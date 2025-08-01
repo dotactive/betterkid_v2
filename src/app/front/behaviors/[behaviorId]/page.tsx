@@ -19,23 +19,23 @@ interface Behavior {
 }
 
 export default function BehaviorDetailPage() {
-  const { isAuthenticated, username } = useAuth();
+  const { isAuthenticated, userId } = useAuth();
   const { behaviorId } = useParams() as { behaviorId: string };
   const [behavior, setBehavior] = useState<Behavior | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (isAuthenticated && username && behaviorId) {
+    if (isAuthenticated && userId && behaviorId) {
       console.log(`Fetching data for behavior: ${behaviorId}`);
       fetchBehavior();
       fetchActivities();
     }
-  }, [isAuthenticated, username, behaviorId]);
+  }, [isAuthenticated, userId, behaviorId]);
 
   const fetchBehavior = async () => {
     try {
-      const response = await axios.get(`/api/behaviors?username=${encodeURIComponent(username ?? '')}`);
+      const response = await axios.get(`/api/behaviors?userId=${encodeURIComponent(userId ?? '')}`);
       const behaviors: Behavior[] = response.data || [];
       const target = behaviors.find((b) => b.behaviorId === behaviorId);
       if (!target) throw new Error('Behavior not found');

@@ -5,17 +5,17 @@ import dynamoDb from '@/lib/aws-config';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const username = searchParams.get('username');
+    const userId = searchParams.get('userId');
 
-    if (!username) {
-      return NextResponse.json({ error: 'Username is required' }, { status: 400 });
+    if (!userId) {
+      return NextResponse.json({ error: 'UserId is required' }, { status: 400 });
     }
 
     const params = {
       TableName: 'betterkid_v2',
-      KeyConditionExpression: 'partitionKey = :pk AND begins_with(sortKey, :sk)',
+      FilterExpression: 'begins_with(partitionKey, :pk) AND begins_with(sortKey, :sk)',
       ExpressionAttributeValues: {
-        ':pk': `USER#${username}`,
+        ':pk': `USER#${userId}`,
         ':sk': 'BALANCELOG#',
       },
     };

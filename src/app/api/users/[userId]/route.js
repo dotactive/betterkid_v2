@@ -4,19 +4,19 @@ import dynamoDb from '@/lib/aws-config';
 
 export async function DELETE(_request, context) {
   try {
-    const { username } = context.params;
+    const { userId } = context.params;
     console.log('Received params:', context.params);
-    console.log('Attempting to delete user:', username);
+    console.log('Attempting to delete user:', userId);
 
-    if (!username || typeof username !== 'string') {
-      console.error('Missing or invalid username for deletion:', username);
-      return NextResponse.json({ error: 'Username is required' }, { status: 400 });
+    if (!userId || typeof userId !== 'string') {
+      console.error('Missing or invalid userId for deletion:', userId);
+      return NextResponse.json({ error: 'UserId is required' }, { status: 400 });
     }
 
     const deleteParams = {
       TableName: 'betterkid_v2',
       Key: {
-        partitionKey: `USER#${username}`,
+        partitionKey: `USER#${userId}`,
         sortKey: 'METADATA',
       },
       ConditionExpression: 'attribute_exists(partitionKey)',
@@ -32,4 +32,4 @@ export async function DELETE(_request, context) {
       { status: 500 }
     );
   }
-}
+} 

@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function AwardEditorPage() {
-  const { isAuthenticated, username } = useAuth();
+  const { isAuthenticated, userId } = useAuth();
   const [balance, setBalance] = useState<number>(0);
   const [inputAmount, setInputAmount] = useState('');
   const [note, setNote] = useState('');
@@ -12,12 +12,12 @@ export default function AwardEditorPage() {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    if (isAuthenticated && username) {
-      console.log('Fetching balance for user:', username);
+    if (isAuthenticated && userId) {
+      console.log('Fetching balance for user:', userId);
       const fetchBalance = async () => {
         try {
-          const response = await axios.get(`/api/user-balance?username=${encodeURIComponent(username)}`);
-          console.log(`Fetched balance for ${username}:`, response.data);
+          const response = await axios.get(`/api/user-balance?userId=${encodeURIComponent(userId)}`);
+          console.log(`Fetched balance for ${userId}:`, response.data);
           setBalance(response.data.balance || 0);
         } catch (err: any) {
           console.error('Failed to fetch balance:', err);
@@ -26,7 +26,7 @@ export default function AwardEditorPage() {
       };
       fetchBalance();
     }
-  }, [isAuthenticated, username]);
+  }, [isAuthenticated, userId]);
 
   const handleButtonClick = (amount: number) => {
     setBalance((prev) => parseFloat((prev + amount).toFixed(2)));
@@ -60,9 +60,9 @@ export default function AwardEditorPage() {
     }
 
     try {
-      console.log('Updating balance for user:', username, 'to:', finalBalance, 'with note:', note);
+      console.log('Updating balance for user:', userId, 'to:', finalBalance, 'with note:', note);
       const response = await axios.put('/api/user-balance', {
-        username,
+        userId,
         balance: finalBalance,
         note,
       });
@@ -88,7 +88,7 @@ export default function AwardEditorPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">Award Editor for {username}</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-4">Award Editor for {userId}</h1>
       {error && <p className="text-red-600 mb-4">{error}</p>}
       {success && <p className="text-green-600 mb-4">{success}</p>}
       <div className="bg-white shadow-md rounded-lg p-6">

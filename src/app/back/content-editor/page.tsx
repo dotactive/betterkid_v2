@@ -31,7 +31,7 @@ export default function ContentEditorPage() {
   const [editingBehaviorId, setEditingBehaviorId] = useState<string | null>(null);
   const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
   const [error, setError] = useState('');
-  const { isAuthenticated, username } = useAuth();
+  const { isAuthenticated, userId } = useAuth();
   const router = useRouter();
   const params = useParams();
 
@@ -39,21 +39,21 @@ export default function ContentEditorPage() {
   // Check authentication and fetch data
   // Fetch data when authenticated
   useEffect(() => {
-    if (isAuthenticated && username) {
-      console.log('Fetching data for authenticated user:', username);
+    if (isAuthenticated && userId) {
+      console.log('Fetching data for authenticated user:', userId);
       fetchBehaviors();
       fetchHomepageBanner();
     }
-  }, [isAuthenticated, username]);
+  }, [isAuthenticated, userId]);
 
   // Fetch behaviors
   const fetchBehaviors = async () => {
     try {
-      if (!username) {
-        throw new Error('Username is missing');
+      if (!userId) {
+        throw new Error('UserId is missing');
       }
-      const response = await axios.get(`/api/behaviors?username=${encodeURIComponent(username)}`);
-      console.log(`Fetched behaviors for ${username}:`, response.data);
+      const response = await axios.get(`/api/behaviors?userId=${encodeURIComponent(userId)}`);
+      console.log(`Fetched behaviors for ${userId}:`, response.data);
       const fetchedBehaviors = response.data || [];
       const validBehaviors = fetchedBehaviors.filter((behavior: Behavior) => {
         if (!behavior.behaviorId || !behavior.behaviorName) {
@@ -91,11 +91,11 @@ export default function ContentEditorPage() {
   // Fetch homepage banner
   const fetchHomepageBanner = async () => {
     try {
-      if (!username) {
-        throw new Error('Username is missing');
+      if (!userId) {
+        throw new Error('UserId is missing');
       }
-      const response = await axios.get(`/api/homebanner?username=${encodeURIComponent(username)}`);
-      console.log(`Fetched homepage banner for ${username}:`, response.data);
+      const response = await axios.get(`/api/homebanner?userId=${encodeURIComponent(userId)}`);
+      console.log(`Fetched homepage banner for ${userId}:`, response.data);
       setHomepageBanner(response.data.homepageBanner);
     } catch (err: any) {
       console.error('Failed to fetch homepage banner:', err);
@@ -106,7 +106,7 @@ export default function ContentEditorPage() {
   // Save homepage banner
   const handleHomepageBannerSave = async () => {
     try {
-      const payload = { username, homepageBanner };
+      const payload = { userId, homepageBanner };
       console.log('Saving homepage banner:', payload);
       const response = await axios.put('/api/homebanner', payload);
       console.log('Homepage banner saved:', response.data);
@@ -126,7 +126,7 @@ export default function ContentEditorPage() {
     }
     try {
       const payload = {
-        username,
+        userId,
         behaviorName: newBehavior.trim(),
         bannerImage: newBannerImage,
         thumbImage: newThumbImage,
@@ -233,10 +233,10 @@ export default function ContentEditorPage() {
       return;
     }
     try {
-      console.log('Deleting behavior with ID:', behaviorId, 'for username:', username);
-      await axios.delete(`/api/behaviors/${encodeURIComponent(behaviorId)}`, {
-        headers: { 'x-username': username },
-      });
+              console.log('Deleting behavior with ID:', behaviorId, 'for userId:', userId);
+              await axios.delete(`/api/behaviors/${encodeURIComponent(behaviorId)}`, {
+          headers: { 'x-userid': userId },
+        });
       await fetchBehaviors();
       setError('');
     } catch (err: any) {

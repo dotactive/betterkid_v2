@@ -10,19 +10,19 @@ export default function ContentEditorPage() {
   const [newEvent, setNewEvent] = useState({ title: '', description: '', image: '', amount: 0, type: 'earn' });
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [error, setError] = useState('');
-  const { isAuthenticated, username } = useAuth();
+  const { isAuthenticated, userId } = useAuth();
   const router = useRouter();
   const params = useParams();
 
   useEffect(() => {
-    if (isAuthenticated && username) {
+    if (isAuthenticated && userId) {
       fetchEvents();
     }
-  }, [isAuthenticated, username]);
+  }, [isAuthenticated, userId]);
 
   const fetchEvents = async () => {
     try {
-      const response = await axios.get(`/api/events?username=${encodeURIComponent(username ?? '')}`);
+      const response = await axios.get(`/api/events?userId=${encodeURIComponent(userId ?? '')}`);
       setEvents(response.data || []);
     } catch (err: any) {
       console.error('Failed to fetch events:', err);
@@ -32,7 +32,7 @@ export default function ContentEditorPage() {
 
   const handleEventSubmit = async () => {
     try {
-      const payload = { ...newEvent, username };
+      const payload = { ...newEvent, userId };
       if (editingEventId) {
         await axios.put(`/api/events/${editingEventId}`, payload);
         setEditingEventId(null);
@@ -74,7 +74,7 @@ export default function ContentEditorPage() {
 
   return (
     <div style={{ padding: '20px' }}>
-      <h1>Content Editor for {username}</h1>
+      <h1>Content Editor for {userId}</h1>
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       <div style={{ marginTop: '30px' }}>

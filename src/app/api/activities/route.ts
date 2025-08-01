@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Behavior ID, activity name, money, and positive are required' }, { status: 400 });
     }
 
-    // Fetch behavior to get username
+    // Fetch behavior to get partition key
     const behaviorParams = {
       TableName: 'betterkid_v2',
       Key: {

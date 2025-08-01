@@ -6,9 +6,9 @@ import dynamoDb from '@/lib/aws-config';
 export async function PUT(request, context) {
   try {
     const { eventId } = context.params;
-    const { username, title, description, image, amount, type } = await request.json();
+    const { userId, title, description, image, amount, type } = await request.json();
 
-    if (!username || !eventId || !title || !type || typeof amount !== 'number') {
+    if (!userId || !eventId || !title || !type || typeof amount !== 'number') {
       return NextResponse.json({ error: 'Missing or invalid fields' }, { status: 400 });
     }
 

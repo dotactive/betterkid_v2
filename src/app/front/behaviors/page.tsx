@@ -12,17 +12,17 @@ interface Behavior {
 }
 
 export default function UserPage() {
-  const { isAuthenticated, username } = useAuth();
+  const { isAuthenticated, userId } = useAuth();
   const [behaviors, setBehaviors] = useState<Behavior[]>([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (isAuthenticated && username) {
-      console.log('Fetching behaviors for user:', username);
+    if (isAuthenticated && userId) {
+      console.log('Fetching behaviors for user:', userId);
       const fetchBehaviors = async () => {
         try {
-          const response = await axios.get(`/api/behaviors?username=${encodeURIComponent(username)}`);
-          console.log(`Fetched behaviors for ${username}:`, response.data);
+          const response = await axios.get(`/api/behaviors?userId=${encodeURIComponent(userId)}`);
+          console.log(`Fetched behaviors for ${userId}:`, response.data);
           const fetchedBehaviors = response.data || [];
           const validBehaviors = fetchedBehaviors.filter((behavior: Behavior) => {
             if (!behavior.behaviorId || !behavior.behaviorName) {
@@ -39,7 +39,7 @@ export default function UserPage() {
       };
       fetchBehaviors();
     }
-  }, [isAuthenticated, username]);
+  }, [isAuthenticated, userId]);
 
   if (isAuthenticated === null) {
     return <div className="flex items-center justify-center min-h-screen text-gray-600">Loading authentication...</div>;
@@ -62,7 +62,7 @@ export default function UserPage() {
           {behaviors.map((behavior) => (
             <Link
               key={behavior.behaviorId}
-              href={`/${username}/front/behaviors/${behavior.behaviorId}`}
+              href={`/front/behaviors/${behavior.behaviorId}`}
               className="block group"
             >
               <div className="bg-white rounded-lg shadow p-4 hover:bg-yellow-100 cursor-pointer">

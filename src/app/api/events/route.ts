@@ -25,16 +25,16 @@ interface GetResponse {
 export async function GET(request: GetRequest): Promise<Response> {
   try {
     const { searchParams } = new URL(request.url);
-    const username = searchParams.get('username');
-    if (!username) {
-      return NextResponse.json({ error: 'Username is required' }, { status: 400 });
+    const userId = searchParams.get('userId');
+    if (!userId) {
+      return NextResponse.json({ error: 'UserId is required' }, { status: 400 });
     }
 
     const params = {
       TableName: 'betterkid_v2',
-      FilterExpression: 'partitionKey = :pk AND begins_with(sortKey, :sk)',
+      FilterExpression: 'begins_with(partitionKey, :pk) AND begins_with(sortKey, :sk)',
       ExpressionAttributeValues: {
-        ':pk': `USER#${username}`,
+        ':pk': `USER#${userId}`,
         ':sk': 'EVENT#',
       },
     };
@@ -57,7 +57,7 @@ export async function GET(request: GetRequest): Promise<Response> {
 }
 
 interface PostRequestBody {
-  username: string;
+  userId: string;
   title: string;
   description?: string;
   image?: string;
@@ -77,16 +77,17 @@ interface PostResponse {
 
 export async function POST(request: PostRequest): Promise<Response> {
   try {
-    const { username, title, description, image, amount, type } = await request.json();
-    if (!username || !title || !type || typeof amount !== 'number') {
+    const { userId, title, description, image, amount, type } = await request.json();
+    if (!userId || !title || !type || typeof amount !== 'number') {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     const eventId = uuidv4();
+    const partitionKey = `USER#${userId}`;
     const params = {
       TableName: 'betterkid_v2',
       Item: {
-        partitionKey: `USER#${username}`,
+        partitionKey,
         sortKey: `EVENT#${eventId}`,
         eventId,
         title,

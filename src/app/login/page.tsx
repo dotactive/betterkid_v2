@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
-  const [username, setUsername] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -17,11 +17,11 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await axios.post('/api/login', { username, password });
+      const response = await axios.post('/api/login', { email, password });
       if (response.data.success) {
-        // Store username in local storage
-        localStorage.setItem('username', username);
-        router.push(`/${username}/front/behaviors`); // Redirect to user page
+        // Store userId in local storage
+        localStorage.setItem('userId', response.data.userId);
+        router.push('/front/behaviors'); // Redirect to user page using static route
       }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to login');
@@ -35,11 +35,11 @@ export default function LoginPage() {
       <h1 className="text-2xl font-bold mb-4">Login</h1>
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium">Username</label>
+          <label className="block text-sm font-medium">Email</label>
           <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="mt-1 p-2 border w-full rounded"
             required
           />

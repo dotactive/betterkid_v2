@@ -13,17 +13,17 @@ interface Behavior {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const username = searchParams.get('username');
-    if (!username) {
-      console.error('Username missing in GET /api/behaviors');
-      return NextResponse.json({ error: 'Username is required' }, { status: 400 });
+    const userId = searchParams.get('userId');
+    if (!userId) {
+      console.error('UserId missing in GET /api/behaviors');
+      return NextResponse.json({ error: 'UserId is required' }, { status: 400 });
     }
 
     const params = {
       TableName: 'betterkid_v2',
-      FilterExpression: 'partitionKey = :pk AND begins_with(sortKey, :sk)',
+      FilterExpression: 'begins_with(partitionKey, :pk) AND begins_with(sortKey, :sk)',
       ExpressionAttributeValues: {
-        ':pk': `USER#${username}`,
+        ':pk': `USER#${userId}`,
         ':sk': 'BEHAVIOR#',
       },
     };
@@ -55,24 +55,25 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { username, behaviorName, bannerImage, thumbImage }: {
-      username: string;
+    const { userId, behaviorName, bannerImage, thumbImage }: {
+      userId: string;
       behaviorName: string;
       bannerImage?: string;
       thumbImage?: string;
     } = body;
-    console.log('POST /api/behaviors, received:', { username, behaviorName, bannerImage, thumbImage });
+    console.log('POST /api/behaviors, received:', { userId, behaviorName, bannerImage, thumbImage });
 
-    if (!username || !behaviorName || typeof behaviorName !== 'string' || behaviorName.trim() === '') {
-      console.error('Invalid input:', { username, behaviorName });
-      return NextResponse.json({ error: 'Username and non-empty behavior name are required' }, { status: 400 });
+    if (!userId || !behaviorName || typeof behaviorName !== 'string' || behaviorName.trim() === '') {
+      console.error('Invalid input:', { userId, behaviorName });
+      return NextResponse.json({ error: 'UserId and non-empty behavior name are required' }, { status: 400 });
     }
 
     const behaviorId = uuidv4();
+    const partitionKey = `USER#${userId}`;
     const params = {
       TableName: 'betterkid_v2',
       Item: {
-        partitionKey: `USER#${username}`,
+        partitionKey: partitionKey,
         sortKey: `BEHAVIOR#${behaviorId}`,
         behaviorId,
         behaviorName: behaviorName.trim(),

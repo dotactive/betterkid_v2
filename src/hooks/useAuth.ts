@@ -4,34 +4,34 @@ import { useRouter } from 'next/navigation';
 
 interface AuthState {
   isAuthenticated: boolean | null; // null = loading, true = authenticated, false = unauthenticated
-  username: string | null; // Current username from localStorage
+  userId: string | null; // Current userId from localStorage
 }
 
 export const useAuth = (): AuthState => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [username, setUsername] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const checkAuth = () => {
-      const user = localStorage.getItem('username');
-      console.log('Checking auth, user in localStorage:', user);
+      const user = localStorage.getItem('userId');
+      console.log('Checking auth, userId in localStorage:', user);
 
       if (!user) {
-        console.log('Authentication failed, redirecting to /login');
+        console.log('Authentication failed, redirecting to /');
         setIsAuthenticated(false);
-        setUsername(null);
-        router.push('/login');
+        setUserId(null);
+        router.push('/');
       } else {
         console.log('User authenticated');
         setIsAuthenticated(true);
-        setUsername(user);
+        setUserId(user);
       }
     };
 
-    const timer = setTimeout(checkAuth, 100); // Delay to ensure localStorage is ready
+    const timer = setTimeout(checkAuth, 50); // Reduced delay to ensure localStorage is ready
     return () => clearTimeout(timer);
   }, [router]);
 
-  return { isAuthenticated, username };
+  return { isAuthenticated, userId };
 };

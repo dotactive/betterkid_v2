@@ -1,47 +1,44 @@
 import { NextResponse } from 'next/server';
-import { QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { ScanCommand } from '@aws-sdk/lib-dynamodb';
 import dynamoDb from '@/lib/aws-config';
 
 interface User {
-  username: string;
+  userId: string;
+  email: string;
   password: string;
 }
 
 export async function POST(request: Request) {
   try {
-    const { username, password }: { username: string; password: string } = await request.json();
+    const { email, password }: { email: string; password: string } = await request.json();
 
-    if (!username || !password) {
-      console.log('Missing username or password in request body');
-      return NextResponse.json({ error: 'Username and password are required' }, { status: 400 });
+    if (!email || !password) {
+      console.log('Missing email or password in request body');
+      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
     const params = {
       TableName: 'betterkid_v2',
-      KeyConditionExpression: 'partitionKey = :pk AND sortKey = :sk',
+      FilterExpression: 'email = :email',
       ExpressionAttributeValues: {
-        ':pk': `USER#${username}`,
-        ':sk': 'METADATA',
+        ':email': email,
       },
     };
-
-    console.log('Sending DynamoDB query with params:', params);
-    const data = await dynamoDb.send(new QueryCommand(params));
-    console.log('Received DynamoDB response:', data);
+    const data = await dynamoDb.send(new ScanCommand(params));
 
     if (!data.Items || data.Items.length === 0) {
-      console.log('No user found in DynamoDB for username:', username);
-      return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
+      console.log('No user found in DynamoDB for email:', email);
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
     const user = data.Items[0] as User;
     if (user.password !== password) {
-      console.log('Password mismatch for user:', username);
-      return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
+      console.log('Password mismatch for email:', email);
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    console.log('Login successful for user:', username);
-    return NextResponse.json({ success: true, username: user.username });
+    console.log('Login successful for email:', email);
+    return NextResponse.json({ success: true, userId: user.userId, email: user.email });
   } catch (error) {
     console.error('Error logging in:', error);
     return NextResponse.json({ error: 'Failed to login' }, { status: 500 });

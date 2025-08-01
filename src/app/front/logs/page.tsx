@@ -12,19 +12,19 @@ interface BalanceLog {
 }
 
 export default function LogsPage() {
-  const { isAuthenticated, username } = useAuth();
+  const { isAuthenticated, userId } = useAuth();
   const [logs, setLogs] = useState<BalanceLog[]>([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (isAuthenticated && username) {
+    if (isAuthenticated && userId) {
       fetchLogs();
     }
-  }, [isAuthenticated, username]);
+  }, [isAuthenticated, userId]);
 
   const fetchLogs = async () => {
     try {
-      const response = await axios.get(`/api/logs?username=${encodeURIComponent(username!)}`);
+      const response = await axios.get(`/api/logs?userId=${encodeURIComponent(userId!)}`);
       setLogs(response.data || []);
     } catch (err: any) {
       console.error('Failed to fetch logs:', err);
@@ -42,7 +42,7 @@ export default function LogsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">Balance Change Logs for {username}</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-4">Balance Change Logs for {userId}</h1>
       {error && <p className="text-red-600 mb-4">{error}</p>}
       <div className="bg-white shadow-md rounded-md overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">

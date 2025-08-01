@@ -6,16 +6,16 @@ import dynamoDb from '@/lib/aws-config';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const username = searchParams.get('username');
-    if (!username) {
-      console.error('Username missing in GET /api/user-balance');
-      return NextResponse.json({ error: 'Username is required' }, { status: 400 });
+    const userId = searchParams.get('userId');
+    if (!userId) {
+      console.error('UserId missing in GET /api/user-balance');
+      return NextResponse.json({ error: 'UserId is required' }, { status: 400 });
     }
 
     const params = {
       TableName: 'betterkid_v2',
       Key: marshall({
-        partitionKey: `USER#${username}`,
+        partitionKey: `USER#${userId}`,
         sortKey: 'ACCOUNT#balance',
       }),
     };
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 
     const { Item } = await dynamoDb.send(new GetItemCommand(params));
     const balance = Item ? unmarshall(Item).balance || 0 : 0;
-    console.log(`Fetched balance for ${username}: $${balance.toFixed(2)}`);
+    console.log(`Fetched balance for ${userId}: $${balance.toFixed(2)}`);
 
     return NextResponse.json({ balance });
   } catch (error) {
@@ -39,17 +39,17 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { username, balance, note }: { username: string; balance: number; note?: string } = body;
-    console.log('PUT /api/user-balance, received:', { username, balance, note });
+    const { userId, balance, note }: { userId: string; balance: number; note?: string } = body;
+    console.log('PUT /api/user-balance, received:', { userId, balance, note });
 
-    if (!username) {
-      return NextResponse.json({ error: 'Username is required' }, { status: 400 });
+    if (!userId) {
+      return NextResponse.json({ error: 'UserId is required' }, { status: 400 });
     }
     if (typeof balance !== 'number' || isNaN(balance)) {
       return NextResponse.json({ error: 'Balance must be a number' }, { status: 400 });
     }
 
-    const partitionKey = `USER#${username}`;
+    const partitionKey = `USER#${userId}`;
     const sortKey = 'ACCOUNT#balance';
 
     // Step 1: Fetch existing balance
@@ -67,7 +67,7 @@ export async function PUT(request: Request) {
       Item: marshall({ partitionKey, sortKey, balance: updatedBalance }),
     };
     await dynamoDb.send(new PutItemCommand(putParams));
-    console.log(`Balance updated for ${username}: $${updatedBalance}`);
+    console.log(`Balance updated for ${userId}: $${updatedBalance}`);
 
     // Step 3: Insert log entry
     const timestamp = new Date().toISOString();
@@ -85,7 +85,7 @@ export async function PUT(request: Request) {
       }),
     };
     await dynamoDb.send(new PutItemCommand(logParams));
-    console.log(`Logged balance change for ${username}`);
+    console.log(`Logged balance change for ${userId}`);
 
     return NextResponse.json({ message: 'Balance updated successfully', balance: updatedBalance });
   } catch (error) {

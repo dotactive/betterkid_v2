@@ -7,31 +7,48 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, username } = useAuth();
+  const { isAuthenticated, userId } = useAuth();
   const router = useRouter();
   const [balance, setBalance] = useState<number | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (isAuthenticated && username) {
-      console.log('Fetching balance for user:', username);
+    if (isAuthenticated && userId) {
+      console.log('Fetching balance for user:', userId);
       const fetchBalance = async () => {
         try {
-          const response = await axios.get(`/api/user-balance?username=${encodeURIComponent(username)}`);
-          console.log(`Fetched balance for ${username}:`, response.data);
+          const response = await axios.get(`/api/user-balance?userId=${encodeURIComponent(userId)}`);
+          console.log(`Fetched balance for ${userId}:`, response.data);
           setBalance(response.data.balance || 0);
         } catch (err: any) {
           console.error('Failed to fetch balance:', err);
           setError(err.response?.data?.error || 'Failed to fetch balance');
         }
       };
+      
+      const fetchUserInfo = async () => {
+        try {
+          const response = await axios.get('/api/users');
+          const users = response.data;
+          const currentUser = users.find((user: any) => user.userId === userId);
+          if (currentUser) {
+            setUsername(currentUser.username);
+          }
+        } catch (err: any) {
+          console.error('Failed to fetch user info:', err);
+        }
+      };
+      
       fetchBalance();
+      fetchUserInfo();
     }
-  }, [isAuthenticated, username]);
+  }, [isAuthenticated, userId]);
+  
   const handleLogout = () => {
-    console.log('Logging out user:', username);
-    localStorage.removeItem('user');
-    router.push('/login');
+    console.log('Logging out user:', userId);
+    localStorage.removeItem('userId');
+    router.push('/');
   };
 
   if (isAuthenticated === null) {
@@ -47,7 +64,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
       <header className="bg-blue-500 text-white px-6 py-4 flex flex-col md:flex-row justify-between items-center">
         <div className="text-center md:text-left">
           <h1 className="text-2xl font-bold">Parents Page</h1>
-          <h2 className="text-xl mt-1">Welcome, <span className="text-yellow-300 font-semibold">{username}</span> 's parent!</h2>
+          <h2 className="text-xl mt-1">Welcome, <span className="text-yellow-300 font-semibold">{username || userId}</span> 's parent!</h2>
         </div>
         <div className="flex items-center mt-4 md:mt-0 gap-4">
           <div className="flex items-center gap-2">
@@ -60,12 +77,12 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
       </header>
 
       <nav className="bg-blue-100 text-blue-900 py-3 px-6 flex justify-center gap-6 font-medium">
-        <Link href={`/${username}/back/profile`} className="hover:underline">Profile</Link>
-        <Link  href={`/${username}/back/content-editor`} className="hover:underline">Content</Link>
+        <Link href="/back/profile" className="hover:underline">Profile</Link>
+        <Link  href="/back/content-editor" className="hover:underline">Content</Link>
         
-        <Link href={`/${username}/back/award-editor`} className="hover:underline">Coins</Link>
-        <Link href={`/${username}/back/events-editor`} className="hover:underline">Events</Link>
-        <Link href={`/${username}/front/behaviors`} className="hover:underline">Back to Front</Link>
+        <Link href="/back/award-editor" className="hover:underline">Coins</Link>
+        <Link href="/back/events-editor" className="hover:underline">Events</Link>
+        <Link href="/front/behaviors" className="hover:underline">Back to Front</Link>
       </nav>
       <main className="px-6 py-8">
         {children}

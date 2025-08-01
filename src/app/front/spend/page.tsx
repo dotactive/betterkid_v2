@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function UserPage() {
-const { isAuthenticated, username } = useAuth();
+const { isAuthenticated, userId } = useAuth();
   const [money, setMoney] = useState(0);
   const [minutes, setMinutes] = useState(0);
 

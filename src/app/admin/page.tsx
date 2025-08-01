@@ -60,16 +60,16 @@ export default function AdminPage() {
     }
   };
 
-  const handleDeleteUser = async (username: string) => {
-    if (!username) {
-      console.error('Cannot delete user: username is missing');
-      setError('Username is required');
+  const handleDeleteUser = async (userId: string) => {
+    if (!userId) {
+      console.error('Cannot delete user: userId is missing');
+      setError('UserId is required');
       return;
     }
     try {
-      console.log('Sending DELETE request for user:', username);
-      await axios.delete(`/api/users/${username}`);
-      setUsers(users.filter((user) => user.username !== username));
+      console.log('Sending DELETE request for user:', userId);
+      await axios.delete(`/api/users/${userId}`);
+      setUsers(users.filter((user) => user.userId !== userId));
       setError('');
     } catch (err: any) {
       console.error('Failed to delete user:', err);
@@ -159,7 +159,7 @@ export default function AdminPage() {
                 <td className="border p-2">{user.parentCode}</td>
                 <td className="border p-2">
                   <button
-                    onClick={() => handleDeleteUser(user.username)}
+                    onClick={() => handleDeleteUser(user.userId)}
                     className="bg-red-500 text-white px-2 py-1 rounded"
                   >
                     Delete
