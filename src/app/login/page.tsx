@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const [email, setEmail] = useState<string>('');
@@ -63,6 +64,12 @@ export default function LoginPage() {
         </button>
       </form>
       {error && <p className="text-red-500 mt-4">{error}</p>}
+      <p className="mt-4 text-center">
+        Don't have an account?{' '}
+        <Link href="/register" className="text-blue-500 hover:underline">
+          Register here
+        </Link>
+      </p>
     </div>
   );
 }

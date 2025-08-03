@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
+import { useEditMode } from '@/hooks/useEditMode';
 
 interface Behavior {
   behaviorId: string;
@@ -13,33 +14,110 @@ interface Behavior {
 
 export default function UserPage() {
   const { isAuthenticated, userId } = useAuth();
+  const { editMode } = useEditMode();
   const [behaviors, setBehaviors] = useState<Behavior[]>([]);
   const [error, setError] = useState('');
+  const [newBehaviorName, setNewBehaviorName] = useState('');
+  const [showAddBehavior, setShowAddBehavior] = useState(false);
+  const [editingBehaviorId, setEditingBehaviorId] = useState<string | null>(null);
+  const [editingBehaviorName, setEditingBehaviorName] = useState('');
 
   useEffect(() => {
     if (isAuthenticated && userId) {
       console.log('Fetching behaviors for user:', userId);
-      const fetchBehaviors = async () => {
-        try {
-          const response = await axios.get(`/api/behaviors?userId=${encodeURIComponent(userId)}`);
-          console.log(`Fetched behaviors for ${userId}:`, response.data);
-          const fetchedBehaviors = response.data || [];
-          const validBehaviors = fetchedBehaviors.filter((behavior: Behavior) => {
-            if (!behavior.behaviorId || !behavior.behaviorName) {
-              console.warn('Invalid behavior:', behavior);
-              return false;
-            }
-            return true;
-          });
-          setBehaviors(validBehaviors);
-        } catch (err: any) {
-          console.error('Failed to fetch behaviors:', err);
-          setError(err.response?.data?.error || 'Failed to fetch behaviors');
-        }
-      };
       fetchBehaviors();
     }
   }, [isAuthenticated, userId]);
+
+  useEffect(() => {
+    if (!editMode) {
+      setShowAddBehavior(false);
+      setEditingBehaviorId(null);
+    }
+  }, [editMode]);
+
+  const fetchBehaviors = async () => {
+    if (!userId) return;
+    try {
+      const response = await axios.get(`/api/behaviors?userId=${encodeURIComponent(userId)}`);
+      console.log(`Fetched behaviors for ${userId}:`, response.data);
+      const fetchedBehaviors = response.data || [];
+      const validBehaviors = fetchedBehaviors.filter((behavior: Behavior) => {
+        if (!behavior.behaviorId || !behavior.behaviorName) {
+          console.warn('Invalid behavior:', behavior);
+          return false;
+        }
+        return true;
+      });
+      setBehaviors(validBehaviors);
+    } catch (err: any) {
+      console.error('Failed to fetch behaviors:', err);
+      setError(err.response?.data?.error || 'Failed to fetch behaviors');
+    }
+  };
+
+  const handleAddBehavior = async () => {
+    if (!userId || !newBehaviorName.trim()) {
+      setError('Behavior name is required');
+      return;
+    }
+    
+    try {
+      await axios.post('/api/behaviors', {
+        userId,
+        behaviorName: newBehaviorName.trim(),
+      });
+      setNewBehaviorName('');
+      setShowAddBehavior(false);
+      fetchBehaviors();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to add behavior');
+    }
+  };
+
+  const handleDeleteBehavior = async (behaviorId: string) => {
+    if (!userId || !confirm('Are you sure you want to delete this behavior and all its activities?')) {
+      return;
+    }
+    
+    try {
+      await axios.delete(`/api/behaviors/${behaviorId}`, {
+        headers: { 'x-userid': userId }
+      });
+      fetchBehaviors();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to delete behavior');
+    }
+  };
+
+  const handleEditBehavior = (behavior: Behavior) => {
+    setEditingBehaviorId(behavior.behaviorId);
+    setEditingBehaviorName(behavior.behaviorName);
+  };
+
+  const handleSaveBehavior = async (behaviorId: string) => {
+    if (!userId || !editingBehaviorName.trim()) {
+      setError('Behavior name is required');
+      return;
+    }
+    
+    try {
+      await axios.put(`/api/behaviors/${behaviorId}`, {
+        userId,
+        behaviorName: editingBehaviorName.trim(),
+      });
+      setEditingBehaviorId(null);
+      setEditingBehaviorName('');
+      fetchBehaviors();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to update behavior');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingBehaviorId(null);
+    setEditingBehaviorName('');
+  };
 
   if (isAuthenticated === null) {
     return <div className="flex items-center justify-center min-h-screen text-gray-600">Loading authentication...</div>;
@@ -50,41 +128,140 @@ export default function UserPage() {
   }
 
   return (
+    <main>
+      {editMode && (
+        <div className="flex justify-end mb-6">
+          <button
+            onClick={() => setShowAddBehavior(!showAddBehavior)}
+            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium"
+          >
+            {showAddBehavior ? 'Cancel' : 'Add Behavior'}
+          </button>
+        </div>
+      )}
 
-        <main className="px-6 py-8">
-
+      {/* Add Behavior Form */}
+      {editMode && showAddBehavior && (
+        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+          <h3 className="text-lg font-medium mb-3">Add New Behavior</h3>
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={newBehaviorName}
+              onChange={(e) => setNewBehaviorName(e.target.value)}
+              placeholder="Behavior name"
+              className="flex-1 p-2 border rounded"
+            />
+            <button
+              onClick={handleAddBehavior}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      )}
 
       {error && <p className="text-red-600 mb-4">{error}</p>}
+      
       {behaviors.length === 0 ? (
         <p className="text-gray-600">No behaviors found. Add some in the Content Editor!</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
           {behaviors.map((behavior) => (
-            <Link
-              key={behavior.behaviorId}
-              href={`/front/behaviors/${behavior.behaviorId}`}
-              className="block group"
-            >
-              <div className="bg-white rounded-lg shadow p-4 hover:bg-yellow-100 cursor-pointer">
-                {behavior.thumbImage ? (
-                  <img
-                    src={behavior.thumbImage}
-                    alt={`${behavior.behaviorName} thumbnail`}
-                    className="w-full  object-cover rounded-md mb-2 group-hover:opacity-80 transition-opacity"
-                  />
-                ) : (
-                  <div className="w-full  bg-gray-200 rounded-md mb-2 flex items-center justify-center text-gray-500">
-                    No Thumbnail
+            <div key={behavior.behaviorId} className="relative">
+              {editMode ? (
+                <div className="bg-white rounded-lg shadow p-4 border-2 border-dashed border-gray-300">
+                  {behavior.thumbImage ? (
+                    <img
+                      src={behavior.thumbImage}
+                      alt={`${behavior.behaviorName} thumbnail`}
+                      className="w-full object-cover rounded-md mb-2"
+                    />
+                  ) : (
+                    <div className="w-full bg-gray-200 rounded-md mb-2 flex items-center justify-center text-gray-500 h-32">
+                      No Thumbnail
+                    </div>
+                  )}
+                  {editingBehaviorId === behavior.behaviorId ? (
+                    <div className="mb-3">
+                      <input
+                        type="text"
+                        value={editingBehaviorName}
+                        onChange={(e) => setEditingBehaviorName(e.target.value)}
+                        className="w-full p-2 border rounded text-gray-900"
+                        onKeyPress={(e) => e.key === 'Enter' && handleSaveBehavior(behavior.behaviorId)}
+                        autoFocus
+                      />
+                    </div>
+                  ) : (
+                    <h3 className="text-lg font-medium text-gray-900 truncate mb-3">{behavior.behaviorName}</h3>
+                  )}
+                  {editingBehaviorId === behavior.behaviorId ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleSaveBehavior(behavior.behaviorId)}
+                        className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-sm"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                        className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded text-sm"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEditBehavior(behavior)}
+                        className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded text-sm"
+                      >
+                        Edit Name
+                      </button>
+                      <Link
+                        href={`/front/behaviors/${behavior.behaviorId}`}
+                        className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-center text-sm"
+                      >
+                        Edit Activities
+                      </Link>
+                      <button
+                        onClick={() => handleDeleteBehavior(behavior.behaviorId)}
+                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  href={`/front/behaviors/${behavior.behaviorId}`}
+                  className="block group"
+                >
+                  <div className="bg-white rounded-lg shadow p-4 hover:bg-yellow-100 cursor-pointer">
+                    {behavior.thumbImage ? (
+                      <img
+                        src={behavior.thumbImage}
+                        alt={`${behavior.behaviorName} thumbnail`}
+                        className="w-full object-cover rounded-md mb-2 group-hover:opacity-80 transition-opacity"
+                      />
+                    ) : (
+                      <div className="w-full bg-gray-200 rounded-md mb-2 flex items-center justify-center text-gray-500 h-32">
+                        No Thumbnail
+                      </div>
+                    )}
+                    <h3 className="text-lg font-medium text-gray-900 truncate">{behavior.behaviorName}</h3>
                   </div>
-                )}
-                <h3 className="text-lg font-medium text-gray-900 truncate">{behavior.behaviorName}</h3>
-              </div>
-            </Link>
+                </Link>
+              )}
+            </div>
           ))}
         </div>
       )}
-  
-      </main>
+
+    </main>
   );
 }
 

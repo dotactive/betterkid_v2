@@ -1,49 +1,98 @@
 
 'use client';
 import { useAuth } from '@/hooks/useAuth';
+import { EditModeProvider, useEditMode } from '@/hooks/useEditMode';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-export default function UserLayout({ children }: { children: React.ReactNode }) {
+interface User {
+  userId: string;
+  username: string;
+  email: string;
+  parentCode: string;
+}
+
+function UserLayoutContent({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, userId } = useAuth();
+  const { editMode, setEditMode } = useEditMode();
   const router = useRouter();
   const [balance, setBalance] = useState<number | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [showParentCodeModal, setShowParentCodeModal] = useState(false);
+  const [parentCodeInput, setParentCodeInput] = useState('');
+  const [userParentCode, setUserParentCode] = useState('');
+
 
   useEffect(() => {
     if (isAuthenticated && userId) {
       console.log('Fetching balance for user:', userId);
-      const fetchBalance = async () => {
-        try {
-          const response = await axios.get(`/api/user-balance?userId=${encodeURIComponent(userId)}`);
-          console.log(`Fetched balance for ${userId}:`, response.data);
-          setBalance(response.data.balance || 0);
-        } catch (err: any) {
-          console.error('Failed to fetch balance:', err);
-          setError(err.response?.data?.error || 'Failed to fetch balance');
-        }
-      };
-      
-      const fetchUserInfo = async () => {
-        try {
-          const response = await axios.get('/api/users');
-          const users = response.data;
-          const currentUser = users.find((user: any) => user.userId === userId);
-          if (currentUser) {
-            setUsername(currentUser.username);
-          }
-        } catch (err: any) {
-          console.error('Failed to fetch user info:', err);
-        }
-      };
-      
       fetchBalance();
       fetchUserInfo();
+      fetchUserParentCode();
     }
   }, [isAuthenticated, userId]);
+
+  const fetchBalance = async () => {
+    if (!userId) return;
+    try {
+      const response = await axios.get(`/api/user-balance?userId=${encodeURIComponent(userId)}`);
+      console.log(`Fetched balance for ${userId}:`, response.data);
+      setBalance(response.data.balance || 0);
+    } catch (err: any) {
+      console.error('Failed to fetch balance:', err);
+      setError(err.response?.data?.error || 'Failed to fetch balance');
+    }
+  };
+  
+  const fetchUserInfo = async () => {
+    if (!userId) return;
+    try {
+      const response = await axios.get('/api/users');
+      const users = response.data;
+      const currentUser = users.find((user: User) => user.userId === userId);
+      if (currentUser) {
+        setUsername(currentUser.username);
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch user info:', err);
+    }
+  };
+
+  const fetchUserParentCode = async () => {
+    if (!userId) return;
+    try {
+      const response = await axios.get('/api/users');
+      const users = response.data;
+      const currentUser = users.find((user: User) => user.userId === userId);
+      if (currentUser) {
+        setUserParentCode(currentUser.parentCode);
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch user parent code:', err);
+    }
+  };
+
+  const handleEditModeToggle = () => {
+    if (editMode) {
+      setEditMode(false);
+    } else {
+      setShowParentCodeModal(true);
+    }
+  };
+
+  const handleParentCodeSubmit = () => {
+    if (parentCodeInput === userParentCode) {
+      setEditMode(true);
+      setShowParentCodeModal(false);
+      setParentCodeInput('');
+      setError('');
+    } else {
+      setError('Invalid parent code');
+    }
+  };
   
   const handleLogout = () => {
     console.log('Logging out user:', userId);
@@ -68,9 +117,18 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
         </div>
         <div className="flex items-center mt-4 md:mt-0 gap-4">
           <div className="flex items-center gap-2">
-
             <span className="text-lg">Your Super Coins: <span className="font-bold">$ {balance?.toFixed(2)}</span></span>
           </div>
+          <button
+            onClick={handleEditModeToggle}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              editMode 
+                ? 'bg-red-500 hover:bg-red-600 text-white' 
+                : 'bg-green-500 hover:bg-green-600 text-white'
+            }`}
+          >
+            {editMode ? 'Exit Edit Mode' : 'Edit Mode'}
+          </button>
           <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg">Grown-Up Zone</button>
           <button onClick={handleLogout} className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg">Blast Off (Log Out)</button>
         </div>
@@ -83,8 +141,52 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
         <Link href="/front/logs" className="hover:underline">Logs</Link>
       </nav>
       <main className="px-6 py-8">
+        {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
         {children}
       </main>
+
+      {/* Parent Code Modal */}
+      {showParentCodeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-medium mb-4">Enter Parent Code</h3>
+            <input
+              type="password"
+              value={parentCodeInput}
+              onChange={(e) => setParentCodeInput(e.target.value)}
+              placeholder="Parent code"
+              className="w-full p-2 border rounded mb-4"
+              onKeyPress={(e) => e.key === 'Enter' && handleParentCodeSubmit()}
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={handleParentCodeSubmit}
+                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={() => {
+                  setShowParentCodeModal(false);
+                  setParentCodeInput('');
+                  setError('');
+                }}
+                className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
+  );
+}
+
+export default function UserLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <EditModeProvider>
+      <UserLayoutContent>{children}</UserLayoutContent>
+    </EditModeProvider>
   );
 }
