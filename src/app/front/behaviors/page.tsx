@@ -4,6 +4,7 @@ import axios from 'axios';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useEditMode } from '@/hooks/useEditMode';
+import ImagePicker from '@/components/ImagePicker';
 
 interface Behavior {
   behaviorId: string;
@@ -21,6 +22,9 @@ export default function UserPage() {
   const [showAddBehavior, setShowAddBehavior] = useState(false);
   const [editingBehaviorId, setEditingBehaviorId] = useState<string | null>(null);
   const [editingBehaviorName, setEditingBehaviorName] = useState('');
+  const [editingThumbImage, setEditingThumbImage] = useState<string | null>(null);
+  const [showImagePicker, setShowImagePicker] = useState(false);
+  const [imagePickerBehaviorId, setImagePickerBehaviorId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAuthenticated && userId) {
@@ -93,6 +97,30 @@ export default function UserPage() {
   const handleEditBehavior = (behavior: Behavior) => {
     setEditingBehaviorId(behavior.behaviorId);
     setEditingBehaviorName(behavior.behaviorName);
+  };
+
+  const handleImageClick = (behavior: Behavior) => {
+    setImagePickerBehaviorId(behavior.behaviorId);
+    setEditingThumbImage(behavior.thumbImage || null);
+    setShowImagePicker(true);
+  };
+
+  const handleImageSelect = async (selectedImage: string | null) => {
+    if (!userId || !imagePickerBehaviorId) return;
+    
+    try {
+      await axios.put(`/api/behaviors/${imagePickerBehaviorId}`, {
+        userId,
+        behaviorName: behaviors.find(b => b.behaviorId === imagePickerBehaviorId)?.behaviorName,
+        thumbImage: selectedImage,
+      });
+      setShowImagePicker(false);
+      setImagePickerBehaviorId(null);
+      setEditingThumbImage(null);
+      fetchBehaviors();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to update thumbnail');
+    }
   };
 
   const handleSaveBehavior = async (behaviorId: string) => {
@@ -172,17 +200,26 @@ export default function UserPage() {
             <div key={behavior.behaviorId} className="relative">
               {editMode ? (
                 <div className="bg-white rounded-lg shadow p-4 border-2 border-dashed border-gray-300">
-                  {behavior.thumbImage ? (
-                    <img
-                      src={behavior.thumbImage}
-                      alt={`${behavior.behaviorName} thumbnail`}
-                      className="w-full object-cover rounded-md mb-2"
-                    />
-                  ) : (
-                    <div className="w-full bg-gray-200 rounded-md mb-2 flex items-center justify-center text-gray-500 h-32">
-                      No Thumbnail
-                    </div>
-                  )}
+                  <div 
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => handleImageClick(behavior)}
+                    title="Click to change thumbnail"
+                  >
+                    {behavior.thumbImage ? (
+                      <img
+                        src={behavior.thumbImage}
+                        alt={`${behavior.behaviorName} thumbnail`}
+                        className="w-full object-cover rounded-md mb-2"
+                      />
+                    ) : (
+                      <div className="w-full bg-gray-200 rounded-md mb-2 flex items-center justify-center text-gray-500 h-32 border-2 border-dashed border-gray-400 hover:border-blue-400">
+                        <div className="text-center">
+                          <div>📷</div>
+                          <div className="text-xs mt-1">Click to add thumbnail</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   {editingBehaviorId === behavior.behaviorId ? (
                     <div className="mb-3">
                       <input
@@ -261,6 +298,18 @@ export default function UserPage() {
         </div>
       )}
 
+      {/* Image Picker Modal */}
+      <ImagePicker
+        folder="thumb"
+        selectedImage={editingThumbImage}
+        onSelect={handleImageSelect}
+        isOpen={showImagePicker}
+        onClose={() => {
+          setShowImagePicker(false);
+          setImagePickerBehaviorId(null);
+          setEditingThumbImage(null);
+        }}
+      />
     </main>
   );
 }

@@ -31,6 +31,9 @@ export default function ContentEditorPage() {
   const [editingBehaviorId, setEditingBehaviorId] = useState<string | null>(null);
   const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [showHomepageBannerPicker, setShowHomepageBannerPicker] = useState(false);
+  const [showBannerPicker, setShowBannerPicker] = useState(false);
+  const [showThumbPicker, setShowThumbPicker] = useState(false);
   const { isAuthenticated, userId } = useAuth();
   const router = useRouter();
   const params = useParams();
@@ -323,10 +326,18 @@ export default function ContentEditorPage() {
             />
           </div>
         )}
+        <button
+          onClick={() => setShowHomepageBannerPicker(true)}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+        >
+          Select Homepage Banner
+        </button>
         <ImagePicker
           folder="banner"
           selectedImage={homepageBanner}
           onSelect={setHomepageBanner}
+          isOpen={showHomepageBannerPicker}
+          onClose={() => setShowHomepageBannerPicker(false)}
         />
         <button
           onClick={handleHomepageBannerSave}
@@ -344,15 +355,31 @@ export default function ContentEditorPage() {
           placeholder="Behavior Name"
           className="w-72 px-3 py-2 mr-2 border border-gray-300 rounded"
         />
+        <button
+          onClick={() => setShowBannerPicker(true)}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition mr-2"
+        >
+          Select Banner
+        </button>
+        <button
+          onClick={() => setShowThumbPicker(true)}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition mr-2"
+        >
+          Select Thumbnail
+        </button>
         <ImagePicker
           folder="banner"
           selectedImage={newBannerImage}
           onSelect={setNewBannerImage}
+          isOpen={showBannerPicker}
+          onClose={() => setShowBannerPicker(false)}
         />
         <ImagePicker
           folder="thumb"
           selectedImage={newThumbImage}
           onSelect={setNewThumbImage}
+          isOpen={showThumbPicker}
+          onClose={() => setShowThumbPicker(false)}
         />
         <button
           onClick={handleBehaviorSubmit}

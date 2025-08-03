@@ -10,6 +10,7 @@ export default function ContentEditorPage() {
   const [newEvent, setNewEvent] = useState({ title: '', description: '', image: '', amount: 0, type: 'earn' });
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [showImagePicker, setShowImagePicker] = useState(false);
   const { isAuthenticated, userId } = useAuth();
   const router = useRouter();
   const params = useParams();
@@ -93,10 +94,19 @@ export default function ContentEditorPage() {
           onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
           style={{ margin: '5px' }}
         />
+        <button
+          onClick={() => setShowImagePicker(true)}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+          style={{ margin: '5px' }}
+        >
+          Select Event Image
+        </button>
         <ImagePicker
           folder="thumb"
           selectedImage={newEvent.image}
           onSelect={(img) => setNewEvent({ ...newEvent, image: img ?? '' })}
+          isOpen={showImagePicker}
+          onClose={() => setShowImagePicker(false)}
         />
         <input
           type="number"

@@ -5,12 +5,13 @@ interface ImagePickerProps {
   folder: string; // e.g., 'banner' or 'thumb'
   selectedImage: string | null; // e.g., '/banner/banner1.jpg'
   onSelect: (image: string | null) => void; // Callback to update parent state
+  isOpen: boolean; // Control panel open state from parent
+  onClose: () => void; // Callback to close the panel
 }
 
-const ImagePicker: React.FC<ImagePickerProps> = ({ folder, selectedImage, onSelect }) => {
+const ImagePicker: React.FC<ImagePickerProps> = ({ folder, selectedImage, onSelect, isOpen, onClose }) => {
   const [images, setImages] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
 
   // Fetch images from the specified folder
   useEffect(() => {
@@ -34,22 +35,16 @@ const ImagePicker: React.FC<ImagePickerProps> = ({ folder, selectedImage, onSele
   const handleImageSelect = (image: string | null) => {
     console.log(`Selected image: ${image} for folder: ${folder}`);
     onSelect(image);
-    setOpen(false); // Close panel after selection
+    onClose(); // Close panel after selection
   };
 
   return (
     <>
-      <button
-        className="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition"
-        onClick={() => setOpen(true)}
-      >
-        Select Image
-      </button>
       {/* Overlay */}
-      {open && (
+      {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black bg-opacity-30 transition-opacity"
-          onClick={() => setOpen(false)}
+          className="fixed inset-0 z-40 bg-black opacity-50 transition-opacity"
+          onClick={onClose}
         />
       )}
       {/* Sliding Panel */}
@@ -57,16 +52,16 @@ const ImagePicker: React.FC<ImagePickerProps> = ({ folder, selectedImage, onSele
         className={`
           fixed top-0 right-0 h-full w-full max-w-md z-50 bg-white shadow-2xl border-l border-gray-200
           transform transition-transform duration-300 ease-in-out
-          ${open ? 'translate-x-0' : 'translate-x-full'}
+          ${isOpen ? 'translate-x-0' : 'translate-x-full'}
           flex flex-col
         `}
-        style={{ pointerEvents: open ? 'auto' : 'none' }}
+        style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
       >
         <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50">
           <h4 className="text-lg font-semibold">Select {folder} Image</h4>
           <button
             className="text-gray-500 hover:text-red-600 text-2xl font-bold"
-            onClick={() => setOpen(false)}
+            onClick={onClose}
             aria-label="Close"
           >
             ×

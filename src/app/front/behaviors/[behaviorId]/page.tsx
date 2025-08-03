@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import axios from 'axios';
 import { useAuth } from '@/hooks/useAuth';
 import { useEditMode } from '@/hooks/useEditMode';
+import ImagePicker from '@/components/ImagePicker';
 
 interface Activity {
   activityId: string;
@@ -38,6 +39,8 @@ export default function BehaviorDetailPage() {
     money: 0,
     positive: true
   });
+  const [showBannerPicker, setShowBannerPicker] = useState(false);
+  const [editingBannerImage, setEditingBannerImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAuthenticated && userId && behaviorId) {
@@ -146,6 +149,30 @@ export default function BehaviorDetailPage() {
     setEditingActivity({ name: '', money: 0, positive: true });
   };
 
+  const handleBannerClick = () => {
+    if (!editMode) return;
+    setEditingBannerImage(behavior?.bannerImage || null);
+    setShowBannerPicker(true);
+  };
+
+  const handleBannerSelect = async (selectedImage: string | null) => {
+    if (!userId || !behavior) return;
+    
+    try {
+      await axios.put(`/api/behaviors/${behavior.behaviorId}`, {
+        userId,
+        behaviorName: behavior.behaviorName,
+        bannerImage: selectedImage,
+        thumbImage: behavior.thumbImage,
+      });
+      setShowBannerPicker(false);
+      setEditingBannerImage(null);
+      fetchBehavior();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to update banner');
+    }
+  };
+
   if (isAuthenticated === null) {
     return <div className="flex items-center justify-center min-h-screen text-gray-600">Loading authentication...</div>;
   }
@@ -176,6 +203,32 @@ export default function BehaviorDetailPage() {
           >
             {showAddActivity ? 'Cancel' : 'Add Activity'}
           </button>
+        </div>
+      )}
+
+      {/* Banner Image Section */}
+      {(editMode || behavior.bannerImage) && (
+        <div className="mb-6">
+          <div 
+            className={`relative ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+            onClick={handleBannerClick}
+            title={editMode ? 'Click to change banner' : ''}
+          >
+            {behavior.bannerImage ? (
+              <img
+                src={behavior.bannerImage}
+                alt={`${behavior.behaviorName} banner`}
+                className="w-full max-h-60 object-cover rounded-lg shadow-lg"
+              />
+            ) : editMode ? (
+              <div className="w-full h-40 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 border-2 border-dashed border-gray-400 hover:border-blue-400">
+                <div className="text-center">
+                  <div className="text-2xl">🖼️</div>
+                  <div className="text-sm mt-1">Click to add banner</div>
+                </div>
+              </div>
+            ) : null}
+          </div>
         </div>
       )}
 
@@ -385,6 +438,17 @@ export default function BehaviorDetailPage() {
         </section>
       </div>
 
+      {/* Banner Image Picker Modal */}
+      <ImagePicker
+        folder="banner"
+        selectedImage={editingBannerImage}
+        onSelect={handleBannerSelect}
+        isOpen={showBannerPicker}
+        onClose={() => {
+          setShowBannerPicker(false);
+          setEditingBannerImage(null);
+        }}
+      />
     </div>
   );
 }
