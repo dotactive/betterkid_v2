@@ -22,7 +22,7 @@ export default function LoginPage() {
       if (response.data.success) {
         // Store userId in local storage
         localStorage.setItem('userId', response.data.userId);
-        router.push('/front/behaviors'); // Redirect to user page using static route
+        router.push('/behaviors'); // Redirect to user page using static route
       }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to login');

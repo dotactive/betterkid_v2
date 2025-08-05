@@ -25,8 +25,8 @@ export default function LoginPage() {
         console.log('Login successful, storing userId:', response.data.userId);
         // Store userId in local storage
         localStorage.setItem('userId', response.data.userId);
-        console.log('Redirecting to /front/behaviors');
-        router.push('/front/behaviors'); // Redirect to user page using static route
+        console.log('Redirecting to /behaviors');
+        router.push('/behaviors'); // Redirect to user page using static route
       }
     } catch (err: any) {
       console.error('Login error:', err);

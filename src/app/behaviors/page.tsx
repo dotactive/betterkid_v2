@@ -157,42 +157,9 @@ export default function UserPage() {
 
   return (
     <main>
-      {editMode && (
-        <div className="flex justify-end mb-6">
-          <button
-            onClick={() => setShowAddBehavior(!showAddBehavior)}
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium"
-          >
-            {showAddBehavior ? 'Cancel' : 'Add Behavior'}
-          </button>
-        </div>
-      )}
-
-      {/* Add Behavior Form */}
-      {editMode && showAddBehavior && (
-        <div className="bg-gray-50 p-4 rounded-lg mb-6">
-          <h3 className="text-lg font-medium mb-3">Add New Behavior</h3>
-          <div className="flex gap-3">
-            <input
-              type="text"
-              value={newBehaviorName}
-              onChange={(e) => setNewBehaviorName(e.target.value)}
-              placeholder="Behavior name"
-              className="flex-1 p-2 border rounded"
-            />
-            <button
-              onClick={handleAddBehavior}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              Add
-            </button>
-          </div>
-        </div>
-      )}
-
       {error && <p className="text-red-600 mb-4">{error}</p>}
       
-      {behaviors.length === 0 ? (
+      {behaviors.length === 0 && !editMode ? (
         <p className="text-gray-600">No behaviors found. Add some in the Content Editor!</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
@@ -258,7 +225,7 @@ export default function UserPage() {
                         Edit Name
                       </button>
                       <Link
-                        href={`/front/behaviors/${behavior.behaviorId}`}
+                        href={`/behaviors/${behavior.behaviorId}`}
                         className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded text-center text-sm"
                       >
                         Edit Activities
@@ -274,7 +241,7 @@ export default function UserPage() {
                 </div>
               ) : (
                 <Link
-                  href={`/front/behaviors/${behavior.behaviorId}`}
+                  href={`/behaviors/${behavior.behaviorId}`}
                   className="block group"
                 >
                   <div className="bg-white rounded-lg shadow p-4 hover:bg-yellow-100 cursor-pointer">
@@ -295,6 +262,70 @@ export default function UserPage() {
               )}
             </div>
           ))}
+          
+          {/* Add Behavior Box - appears in grid when in edit mode */}
+          {editMode && (
+            <div className="relative">
+              <div 
+                className="bg-white rounded-lg shadow p-4 border-2 border-dashed border-green-400 hover:border-green-500 cursor-pointer transition-colors"
+                onClick={() => setShowAddBehavior(!showAddBehavior)}
+              >
+                {showAddBehavior ? (
+                  <div className="h-full flex flex-col">
+                    <div className="w-full bg-green-50 rounded-md mb-2 flex items-center justify-center text-green-600 h-32 border-2 border-dashed border-green-400">
+                      <div className="text-center">
+                        <div className="text-4xl">➕</div>
+                        <div className="text-xs mt-1">Add Behavior</div>
+                      </div>
+                    </div>
+                    <div className="mb-3">
+                      <input
+                        type="text"
+                        value={newBehaviorName}
+                        onChange={(e) => setNewBehaviorName(e.target.value)}
+                        placeholder="Behavior name"
+                        className="w-full p-2 border rounded text-gray-900"
+                        onKeyPress={(e) => e.key === 'Enter' && handleAddBehavior()}
+                        onClick={(e) => e.stopPropagation()}
+                        autoFocus
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddBehavior();
+                        }}
+                        className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-sm"
+                      >
+                        Add
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowAddBehavior(false);
+                          setNewBehaviorName('');
+                        }}
+                        className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded text-sm"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-full flex flex-col justify-center">
+                    <div className="w-full bg-green-50 rounded-md mb-2 flex items-center justify-center text-green-600 h-32 border-2 border-dashed border-green-400">
+                      <div className="text-center">
+                        <div className="text-4xl">➕</div>
+                        <div className="text-xs mt-1">Add Behavior</div>
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-medium text-green-600 text-center">Add New Behavior</h3>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

@@ -24,16 +24,18 @@ This is a Next.js 15 application using the App Router architecture, built as a b
 
 The app follows a clear separation between user interfaces:
 
-- **Frontend (`/front`)**: Child-friendly interface with colorful design
-  - `/front/behaviors` - View and track behaviors
-  - `/front/earnlose` - Earn/lose "Super Coins"
-  - `/front/spend` - Spend coins on rewards
-  - `/front/logs` - View activity history
+- **Frontend**: Child-friendly interface with colorful design
+  - `/behaviors` - View and track behaviors
+  - `/earnlose` - Earn/lose "Super Coins"
+  - `/spend` - Spend coins on rewards
+  - `/logs` - View activity history
 
 - **Backend (`/back`)**: Parent/admin interface for content management
   - `/back/content-editor` - Manage content
-  - `/back/award-editor` - Configure coin rewards
   - `/back/events-editor` - Manage events
+
+- **Award Editor**: Coin reward configuration (available in edit mode)
+  - `/award-editor` - Configure coin rewards
 
 ### Authentication System
 
@@ -62,7 +64,7 @@ Uses AWS DynamoDB with a single table approach:
 
 ### Key Components
 
-- **Layout Components**: Separate layouts for front/back with navigation and user balance display
+- **Layout Components**: Unified layout with navigation and user balance display that adapts for front/back sections
 - **ImagePicker**: Component for handling image uploads
 - **Authentication Hook**: `useAuth` provides authentication state across the app
 

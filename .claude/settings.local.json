@@ -10,7 +10,9 @@
       "Bash(npx tsc:*)",
       "Bash(ls:*)",
       "Bash(find:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(mv:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }

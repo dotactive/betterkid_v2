@@ -1,10 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { useAuth } from '@/hooks/useAuth';
+import { useEditMode } from '@/hooks/useEditMode';
 
 export default function AwardEditorPage() {
   const { isAuthenticated, userId } = useAuth();
+  const { editMode } = useEditMode();
+  const router = useRouter();
   const [balance, setBalance] = useState<number>(0);
   const [inputAmount, setInputAmount] = useState('');
   const [note, setNote] = useState('');
@@ -27,6 +31,14 @@ export default function AwardEditorPage() {
       fetchBalance();
     }
   }, [isAuthenticated, userId]);
+
+  // Redirect if not in edit mode
+  useEffect(() => {
+    if (isAuthenticated !== null && isAuthenticated && !editMode) {
+      console.log('Access denied: Award Editor requires edit mode');
+      router.push('/behaviors');
+    }
+  }, [isAuthenticated, editMode, router]);
 
   const handleButtonClick = (amount: number) => {
     setBalance((prev) => parseFloat((prev + amount).toFixed(2)));
@@ -84,6 +96,10 @@ export default function AwardEditorPage() {
 
   if (!isAuthenticated) {
     return null; // Redirect handled by useAuth
+  }
+
+  if (!editMode) {
+    return <div className="flex items-center justify-center min-h-screen text-gray-600">Redirecting...</div>;
   }
 
   return (
