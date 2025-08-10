@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #ebf6d6;
   --foreground: #171717;
+  --better-colour-1:#aadb4d;
+  --better-h-colour-1:#d0f589;
+  --better-colour-2:#ff72b8;
+  --better-h-colour-2:#fd9ccc;
+  --better-colour-3:#54d9ff; 
+  --better-h-colour-3:#a6e6f8;
 }
 
 @theme inline {
@@ -12,15 +18,31 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
-}
+} */
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+.btn-1{  color: #fff;  background-color: var(--better-colour-1);border:solid 2px #fff;}
+.btn-1:hover{background-color: #fff; color:var(--better-colour-1); border:solid 2px var(--better-colour-1);}
+.btn-2{  color: #fff;  background-color: var(--better-colour-2);border:solid 2px #fff;}
+.btn-2:hover{background-color: #fff; color:var(--better-colour-2); border:solid 2px var(--better-colour-2);}
+
+.text-colour-1{color:var(--better-colour-1); }
+.text-colour-2{color:var(--better-colour-2); }
+.text-colour-3{color:var(--better-colour-3); }
+
+.background-colour-1{background-color:var(--better-colour-1); }
+.background-colour-2{background-color:var(--better-colour-2); }
+.background-colour-3{background-color:var(--better-colour-3); }
+
+.border-colour-1{border-color:var(--better-colour-1); }
+.border-colour-2{border-color:var(--better-colour-2); }
+.border-colour-3{border-color:var(--better-colour-3); }

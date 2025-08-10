@@ -10,6 +10,7 @@ export default function AwardEditorPage() {
   const { editMode } = useEditMode();
   const router = useRouter();
   const [balance, setBalance] = useState<number>(0);
+  const [changes, setChanges] = useState<number>(0);
   const [inputAmount, setInputAmount] = useState('');
   const [note, setNote] = useState('');
   const [error, setError] = useState('');
@@ -41,7 +42,7 @@ export default function AwardEditorPage() {
   }, [isAuthenticated, editMode, router]);
 
   const handleButtonClick = (amount: number) => {
-    setBalance((prev) => parseFloat((prev + amount).toFixed(2)));
+    setChanges((prev) => parseFloat((prev + amount).toFixed(2)));
     setInputAmount('');
     setNote('');
     setError('');
@@ -60,7 +61,7 @@ export default function AwardEditorPage() {
   };
 
   const handleSubmit = async () => {
-    let finalBalance = balance;
+    let totalChanges = changes;
 
     if (inputAmount) {
       const parsedAmount = parseFloat(inputAmount);
@@ -68,8 +69,16 @@ export default function AwardEditorPage() {
         setError('Please enter a valid number (e.g., 10.00 or -15.25)');
         return;
       }
-      finalBalance = parseFloat((balance + parsedAmount).toFixed(2));
+      totalChanges = parseFloat((changes + parsedAmount).toFixed(2));
     }
+
+    // Don't submit if no changes
+    if (totalChanges === 0) {
+      setError('No changes to submit');
+      return;
+    }
+
+    const finalBalance = parseFloat((balance + totalChanges).toFixed(2));
 
     try {
       console.log('Updating balance for user:', userId, 'to:', finalBalance, 'with note:', note);
@@ -80,10 +89,16 @@ export default function AwardEditorPage() {
       });
       console.log('Balance updated:', response.data);
       setBalance(response.data.balance);
+      setChanges(0);
       setInputAmount('');
       setNote('');
       setSuccess('Balance updated successfully!');
       setError('');
+      
+      // Refresh the page after successful submission
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (err: any) {
       console.error('Failed to update balance:', err);
       setError(err.response?.data?.error || 'Failed to update balance');
@@ -103,20 +118,29 @@ export default function AwardEditorPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className=" py-6">
       <h1 className="text-2xl font-bold text-gray-900 mb-4">Award Editor for {userId}</h1>
       {error && <p className="text-red-600 mb-4">{error}</p>}
       {success && <p className="text-green-600 mb-4">{success}</p>}
       <div className="bg-white shadow-md rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
-          Current Balance: ${balance.toFixed(2)}
-        </h2>
+        <div className="mb-4">
+
+          <h2 className="text-lg font-medium text-blue-600">
+            Changes: ${changes.toFixed(2)}
+          </h2>
+        </div>
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <button
             onClick={() => handleButtonClick(1.00)}
             className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
           >
             +$1.00
+          </button>
+          <button
+            onClick={() => handleButtonClick(0.50)}
+            className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+          >
+            +$0.50
           </button>
           <button
             onClick={() => handleButtonClick(0.10)}
@@ -129,6 +153,12 @@ export default function AwardEditorPage() {
             className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
           >
             -$1.00
+          </button>
+          <button
+            onClick={() => handleButtonClick(-0.50)}
+            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
+          >
+            -$0.50
           </button>
           <button
             onClick={() => handleButtonClick(-0.10)}
@@ -154,7 +184,12 @@ export default function AwardEditorPage() {
           />
           <button
             onClick={handleSubmit}
-            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
+            disabled={changes === 0 && !inputAmount}
+            className={`px-6 py-2 rounded-md transition-colors ${
+              changes === 0 && !inputAmount
+                ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
           >
             Submit
           </button>

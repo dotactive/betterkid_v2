@@ -36,9 +36,9 @@ export default function LoginPage() {
       <h1 className="text-2xl font-bold mb-4">Login</h1>
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium">Email</label>
+          <label className="block text-sm font-medium">Email/Username</label>
           <input
-            type="email"
+            type="text"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="mt-1 p-2 border w-full rounded"
