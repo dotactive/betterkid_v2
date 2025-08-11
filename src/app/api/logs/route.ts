@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { ScanCommand } from '@aws-sdk/lib-dynamodb';
 import dynamoDb from '@/lib/aws-config';
 
 export async function GET(request: Request) {
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
       },
     };
 
-    const result = await dynamoDb.send(new QueryCommand(params));
+    const result = await dynamoDb.send(new ScanCommand(params));
     const logs = result.Items || [];
 
     logs.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
