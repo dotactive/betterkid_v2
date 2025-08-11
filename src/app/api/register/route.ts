@@ -53,6 +53,18 @@ export async function POST(request: Request) {
     };
 
     await dynamoDb.send(new PutCommand(params));
+
+    // Create initial balance record
+    const balanceParams = {
+      TableName: 'betterkid_v2',
+      Item: {
+        partitionKey: `USER#${userId}`,
+        sortKey: 'ACCOUNT#balance',
+        balance: 0
+      },
+    };
+    await dynamoDb.send(new PutCommand(balanceParams));
+
     console.log('User registered successfully:', { userId, username, email });
     
     return NextResponse.json({ 

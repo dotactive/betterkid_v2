@@ -68,12 +68,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const fetchUserInfo = async () => {
     if (!userId) return;
     try {
-      const response = await axios.get('/api/users');
-      const users = response.data;
-      const currentUser = users.find((user: User) => user.userId === userId);
-      if (currentUser) {
-        setUsername(currentUser.username);
-      }
+      const response = await axios.get(`/api/users/${encodeURIComponent(userId)}`);
+      setUsername(response.data.username);
     } catch (err: any) {
       console.error('Failed to fetch user info:', err);
     }
@@ -82,12 +78,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const fetchUserParentCode = async () => {
     if (!userId) return;
     try {
-      const response = await axios.get('/api/users');
-      const users = response.data;
-      const currentUser = users.find((user: User) => user.userId === userId);
-      if (currentUser) {
-        setUserParentCode(currentUser.parentCode);
-      }
+      const response = await axios.get(`/api/users/${encodeURIComponent(userId)}`);
+      setUserParentCode(response.data.parentCode);
     } catch (err: any) {
       console.error('Failed to fetch user parent code:', err);
     }
