@@ -11,6 +11,9 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.812.0",
     "@aws-sdk/lib-dynamodb": "^3.814.0",
+    "@fortawesome/fontawesome-svg-core": "^7.0.0",
+    "@fortawesome/free-solid-svg-icons": "^7.0.0",
+    "@fortawesome/react-fontawesome": "^0.2.3",
     "axios": "^1.10.0",
     "follow-redirects": "^1.15.9",
     "mime-db": "^1.54.0",

@@ -26,6 +26,100 @@ interface User {
   parentCode: string;
 }
 
+interface BehaviorType {
+  behaviorId: string;
+  behaviorName: string;
+}
+
+function BreadcrumbComponent({ pathname }: { pathname: string | null }) {
+  const [behaviorName, setBehaviorName] = useState<string>('');
+  const { userId } = useAuth();
+
+  useEffect(() => {
+    // Check if we're on a behavior detail page
+    const behaviorMatch = pathname?.match(/^\/behaviors\/([^\/]+)$/);
+    if (behaviorMatch && userId) {
+      const behaviorId = behaviorMatch[1];
+      fetchBehaviorName(behaviorId);
+    }
+  }, [pathname, userId]);
+
+  const fetchBehaviorName = async (behaviorId: string) => {
+    try {
+      const response = await axios.get(`/api/behaviors?userId=${encodeURIComponent(userId!)}`);
+      const behaviors = response.data;
+      const behavior = behaviors.find((b: BehaviorType) => b.behaviorId === behaviorId);
+      if (behavior) {
+        setBehaviorName(behavior.behaviorName);
+      }
+    } catch (err) {
+      console.error('Failed to fetch behavior name:', err);
+    }
+  };
+
+  return (
+    <nav aria-label="Breadcrumb">
+      <ol className="flex items-center space-x-2 text-gray-600">
+        <li>
+          <Link href="/behaviors" className="hover:text-blue-600">
+            Home
+          </Link>
+        </li>
+        
+        {pathname === '/behaviors' && (
+          <>
+            <li className="text-gray-400">/</li>
+            <li className="text-gray-800 font-medium">Behaviors</li>
+          </>
+        )}
+        
+        {pathname?.startsWith('/behaviors/') && pathname !== '/behaviors' && (
+          <>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link href="/behaviors" className="hover:text-blue-600">
+                Behaviors
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li className="text-gray-800 font-medium">
+              {behaviorName || 'Loading...'}
+            </li>
+          </>
+        )}
+        
+        {pathname === '/earnlose' && (
+          <>
+            <li className="text-gray-400">/</li>
+            <li className="text-gray-800 font-medium">Activities</li>
+          </>
+        )}
+        
+        {pathname === '/spend' && (
+          <>
+            <li className="text-gray-400">/</li>
+            <li className="text-gray-800 font-medium">Spend Coins</li>
+          </>
+        )}
+        
+        {pathname === '/logs' && (
+          <>
+            <li className="text-gray-400">/</li>
+            <li className="text-gray-800 font-medium">Logs</li>
+          </>
+        )}
+        
+        {pathname === '/award-editor' && (
+          <>
+            <li className="text-gray-400">/</li>
+            <li className="text-gray-800 font-medium">Award Editor</li>
+          </>
+        )}
+      </ol>
+    </nav>
+  );
+}
+
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, userId } = useAuth();
   const { editMode, setEditMode } = useEditMode();
@@ -180,10 +274,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                   Behaviors
                 </Link>
                 <Link href="/earnlose" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
-                  Earn Super Coins
+                  Activities
                 </Link>
                 <Link href="/spend" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
-                  Spend Super Coins
+                  Spend Coins
                 </Link>
                 <Link href="/logs" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
                   Logs
@@ -215,9 +309,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               <h2 className="text-2xl font-bold">
                 Welcome, <span className="text-colour-2">{username || userId}</span>{isBackSection ? ' \'s parent!' : ' !'}
               </h2>
-              <p className=" text-sm mt-1">
-                {isBackSection ? 'Manage your child\'s progress' : 'Keep being awesome!'}
-              </p>
+              <div className="text-sm mt-1">
+                {isBackSection ? (
+                  <p>Manage your child's progress</p>
+                ) : (
+                  <BreadcrumbComponent pathname={pathname} />
+                
+                )}
+              </div>
             </div>
             <div className="background-colour-3 text-black px-6 py-3 rounded-lg shadow-md">
               <div className="text-center">

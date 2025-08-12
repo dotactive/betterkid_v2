@@ -5,6 +5,22 @@ import axios from 'axios';
 import { useAuth } from '@/hooks/useAuth';
 import { useEditMode } from '@/hooks/useEditMode';
 import ImagePicker from '@/components/ImagePicker';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faPlus, 
+  faMinus, 
+  faStar, 
+  faExclamationTriangle, 
+  faEdit, 
+  faTrash, 
+  faCheck, 
+  faTimes,
+  faThoughtBubble,
+  faSmile,
+  faCoins,
+  faFrown
+} from '@fortawesome/free-solid-svg-icons';
+import { faFaceSmile } from '@fortawesome/free-solid-svg-icons/faFaceSmile';
 
 interface Activity {
   activityId: string;
@@ -207,7 +223,7 @@ export default function BehaviorDetailPage() {
       )}
 
       {/* Banner Image Section */}
-      {(editMode || behavior.bannerImage) && (
+      {/* {(editMode || behavior.bannerImage) && (
         <div className="mb-6">
           <div 
             className={`relative ${editMode ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
@@ -230,9 +246,9 @@ export default function BehaviorDetailPage() {
             ) : null}
           </div>
         </div>
-      )}
+      )} */}
 
-      <h1 className="text-2xl font-bold mb-8 text-center">{behavior.behaviorName}</h1>
+      {/* <h1 className="text-2xl font-bold mb-8 text-center">{behavior.behaviorName}</h1> */}
 
       {/* Add Activity Form */}
       {editMode && showAddActivity && (
@@ -276,165 +292,235 @@ export default function BehaviorDetailPage() {
 
       {error && <p className="text-red-600 mb-4 text-center">{error}</p>}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto text-black">
-        {/* Positive Activities */}
-        <section className="bg-green-50 rounded-2xl shadow p-6 border border-green-200 min-h-[300px] flex flex-col">
-          <h2 className="text-xl font-semibold text-green-700 mb-4 text-center">Positive Activities</h2>
-          {positiveActivities.length === 0 ? (
-            <p className="text-gray-500 text-center">No positive activities found.</p>
-          ) : (
-            <ul className="flex-1 pl-6">
-              {positiveActivities.map((activity) => (
-                <li key={activity.activityId} className="mb-3">
-                  {editMode && editingActivityId === activity.activityId ? (
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={editingActivity.name}
-                        onChange={(e) => setEditingActivity({ ...editingActivity, name: e.target.value })}
-                        className="w-full p-2 border rounded text-gray-900"
-                        placeholder="Activity name"
-                      />
-                      <div className="flex gap-2">
-                        <select
-                          value={editingActivity.positive ? '+' : '-'}
-                          onChange={(e) => setEditingActivity({ ...editingActivity, positive: e.target.value === '+' })}
-                          className="p-2 border rounded text-gray-900"
-                        >
-                          <option value="+">+</option>
-                          <option value="-">-</option>
-                        </select>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={editingActivity.money}
-                          onChange={(e) => setEditingActivity({ ...editingActivity, money: parseFloat(e.target.value) || 0 })}
-                          className="flex-1 p-2 border rounded text-gray-900"
-                          placeholder="Amount"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleSaveActivity(activity.activityId)}
-                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={handleCancelEditActivity}
-                          className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className={`${editMode ? 'flex justify-between items-center' : ''}`}>
-                      <div>
-                        <span className="font-medium">{activity.activityName}</span> — ${activity.money.toFixed(2)}
-                      </div>
-                      {editMode && (
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => handleEditActivity(activity)}
-                            className="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteActivity(activity.activityId)}
-                            className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
-                          >
-                            Delete
-                          </button>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+        {/* Positive Activities Section */}
+        <section className="relative overflow-hidden">
+          {/* Header with gradient background */}
+          <div className=" background-colour-1 rounded-t-lg p-6 ">
+            <div className="flex items-center justify-center space-x-3">
+ 
+              <h2 className="text-2xl font-bold text-white">Good Actions</h2>
+            </div>
+            <p className="text-green-100 text-center mt-2 text-sm">Earn Super Coins for positive behaviors!</p>
+          </div>
+          
+          {/* Content area */}
+          <div className="bg-white rounded-b-lg min-h-[400px] p-4">
+            {positiveActivities.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                  <FontAwesomeIcon icon={faPlus} className="text-2xl text-gray-400" />
+                </div>
+                <p className="text-center">No good actions yet!</p>
+                <p className="text-sm text-center mt-1">Add some positive activities to get started.</p>
+              </div>
+            ) : (
+              <div className="">
+                {positiveActivities.map((activity) => (
+                  <div key={activity.activityId} className="group">
+                    {editMode && editingActivityId === activity.activityId ? (
+                      <div className="bg-gray-50 rounded-2xl p-4 border-2 border-green-200">
+                        <div className="space-y-3">
+                          <input
+                            type="text"
+                            value={editingActivity.name}
+                            onChange={(e) => setEditingActivity({ ...editingActivity, name: e.target.value })}
+                            className="w-full p-3 border border-gray-300 rounded-xl text-gray-900 focus:border-green-400 focus:ring-2 focus:ring-green-100"
+                            placeholder="Activity name"
+                          />
+                          <div className="flex gap-3">
+                            <select
+                              value={editingActivity.positive ? '+' : '-'}
+                              onChange={(e) => setEditingActivity({ ...editingActivity, positive: e.target.value === '+' })}
+                              className="p-3 border border-gray-300 rounded-xl text-gray-900 focus:border-green-400"
+                            >
+                              <option value="+">+ Earn</option>
+                              <option value="-">- Lose</option>
+                            </select>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={editingActivity.money}
+                              onChange={(e) => setEditingActivity({ ...editingActivity, money: parseFloat(e.target.value) || 0 })}
+                              className="flex-1 p-3 border border-gray-300 rounded-xl text-gray-900 focus:border-green-400"
+                              placeholder="Amount"
+                            />
+                          </div>
+                          <div className="flex gap-2 pt-2">
+                            <button
+                              onClick={() => handleSaveActivity(activity.activityId)}
+                              className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-medium transition-colors"
+                            >
+                              <FontAwesomeIcon icon={faCheck} className="mr-2" />
+                              Save
+                            </button>
+                            <button
+                              onClick={handleCancelEditActivity}
+                              className="flex-1 bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-xl font-medium transition-colors"
+                            >
+                              <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                              Cancel
+                            </button>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+                      </div>
+                    ) : (
+                      <div className=" border-b py-3 border-colour-1 ">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3 flex-1">
+               
+                              <FontAwesomeIcon icon={faFaceSmile} className="text-colour-1 text-4xl mr-5" />
+                           
+                            <div className="flex-1">
+                              <h3 className=" text-gray-800 text-sm">{activity.activityName}</h3>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <span className="text-colour-1 font-bold text-lg">${activity.money.toFixed(2)}</span>
+                          
+                                <FontAwesomeIcon icon={faCoins} className="mr-1  text-colour-1" />
+                           
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {editMode && (
+                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => handleEditActivity(activity)}
+                                className="bg-amber-500 hover:bg-amber-600 text-white p-2 rounded-lg shadow-sm transition-colors"
+                                title="Edit activity"
+                              >
+                                <FontAwesomeIcon icon={faEdit} className="text-sm" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteActivity(activity.activityId)}
+                                className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg shadow-sm transition-colors"
+                                title="Delete activity"
+                              >
+                                <FontAwesomeIcon icon={faTrash} className="text-sm" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
         
-        {/* Negative Activities */}
-        <section className="bg-red-50 rounded-2xl shadow p-6 border border-red-200 min-h-[300px] flex flex-col">
-          <h2 className="text-xl font-semibold text-red-700 mb-4 text-center">Negative Activities</h2>
-          {negativeActivities.length === 0 ? (
-            <p className="text-gray-500 text-center">No negative activities found.</p>
-          ) : (
-            <ul className="flex-1 pl-6">
-              {negativeActivities.map((activity) => (
-                <li key={activity.activityId} className="mb-3">
-                  {editMode && editingActivityId === activity.activityId ? (
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={editingActivity.name}
-                        onChange={(e) => setEditingActivity({ ...editingActivity, name: e.target.value })}
-                        className="w-full p-2 border rounded text-gray-900"
-                        placeholder="Activity name"
-                      />
-                      <div className="flex gap-2">
-                        <select
-                          value={editingActivity.positive ? '+' : '-'}
-                          onChange={(e) => setEditingActivity({ ...editingActivity, positive: e.target.value === '+' })}
-                          className="p-2 border rounded text-gray-900"
-                        >
-                          <option value="+">+</option>
-                          <option value="-">-</option>
-                        </select>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={editingActivity.money}
-                          onChange={(e) => setEditingActivity({ ...editingActivity, money: parseFloat(e.target.value) || 0 })}
-                          className="flex-1 p-2 border rounded text-gray-900"
-                          placeholder="Amount"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleSaveActivity(activity.activityId)}
-                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={handleCancelEditActivity}
-                          className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className={`${editMode ? 'flex justify-between items-center' : ''}`}>
-                      <div>
-                        <span className="font-medium">{activity.activityName}</span> — ${activity.money.toFixed(2)}
-                      </div>
-                      {editMode && (
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => handleEditActivity(activity)}
-                            className="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteActivity(activity.activityId)}
-                            className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
-                          >
-                            Delete
-                          </button>
+        {/* Negative Activities Section */}
+        <section className="relative overflow-hidden">
+          {/* Header with gradient background */}
+          <div className="bg-gradient-to-r background-colour-2 rounded-t-lg p-6 ">
+            <div className="flex items-center justify-center space-x-3">
+
+              <h2 className="text-2xl font-bold text-white">Actions to Avoid</h2>
+            </div>
+            <p className="text-red-100 text-center mt-2 text-sm">These behaviors will cost you Super Coins</p>
+          </div>
+          
+          {/* Content area */}
+          <div className="bg-white rounded-b-lg  min-h-[400px] p-4">
+            {negativeActivities.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                  <FontAwesomeIcon icon={faSmile} className="text-2xl text-gray-400" />
+                </div>
+                <p className="text-center">No negative activities!</p>
+                <p className="text-sm text-center mt-1">That's great - keep up the good work!</p>
+              </div>
+            ) : (
+              <div className="">
+                {negativeActivities.map((activity) => (
+                  <div key={activity.activityId} className="group">
+                    {editMode && editingActivityId === activity.activityId ? (
+                      <div className="bg-gray-50 rounded-2xl p-4 border-2 border-red-200">
+                        <div className="space-y-3">
+                          <input
+                            type="text"
+                            value={editingActivity.name}
+                            onChange={(e) => setEditingActivity({ ...editingActivity, name: e.target.value })}
+                            className="w-full p-3 border border-gray-300 rounded-xl text-gray-900 focus:border-red-400 focus:ring-2 focus:ring-red-100"
+                            placeholder="Activity name"
+                          />
+                          <div className="flex gap-3">
+                            <select
+                              value={editingActivity.positive ? '+' : '-'}
+                              onChange={(e) => setEditingActivity({ ...editingActivity, positive: e.target.value === '+' })}
+                              className="p-3 border border-gray-300 rounded-xl text-gray-900 focus:border-red-400"
+                            >
+                              <option value="+">+ Earn</option>
+                              <option value="-">- Lose</option>
+                            </select>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={editingActivity.money}
+                              onChange={(e) => setEditingActivity({ ...editingActivity, money: parseFloat(e.target.value) || 0 })}
+                              className="flex-1 p-3 border border-gray-300 rounded-xl text-gray-900 focus:border-red-400"
+                              placeholder="Amount"
+                            />
+                          </div>
+                          <div className="flex gap-2 pt-2">
+                            <button
+                              onClick={() => handleSaveActivity(activity.activityId)}
+                              className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-medium transition-colors"
+                            >
+                              <FontAwesomeIcon icon={faCheck} className="mr-2" />
+                              Save
+                            </button>
+                            <button
+                              onClick={handleCancelEditActivity}
+                              className="flex-1 bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-xl font-medium transition-colors"
+                            >
+                              <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                              Cancel
+                            </button>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+                      </div>
+                    ) : (
+                      <div className=" border-b py-3 border-colour-2 ">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3 flex-1">
+                              <FontAwesomeIcon icon={faFrown} className="text-colour-2 text-4xl mr-5" />
+                            <div className="flex-1">
+                              <h3 className=" text-gray-800 text-sm">{activity.activityName}</h3>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <span className="text-colour-2 font-bold text-lg">-${activity.money.toFixed(2)}</span>
+                                <FontAwesomeIcon icon={faCoins} className="mr-1  text-colour-2" />
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {editMode && (
+                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => handleEditActivity(activity)}
+                                className="bg-amber-500 hover:bg-amber-600 text-white p-2 rounded-lg shadow-sm transition-colors"
+                                title="Edit activity"
+                              >
+                                <FontAwesomeIcon icon={faEdit} className="text-sm" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteActivity(activity.activityId)}
+                                className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg shadow-sm transition-colors"
+                                title="Delete activity"
+                              >
+                                <FontAwesomeIcon icon={faTrash} className="text-sm" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
       </div>
 

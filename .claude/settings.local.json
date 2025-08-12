@@ -12,7 +12,8 @@
       "Bash(find:*)",
       "Bash(curl:*)",
       "Bash(mv:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(npm install:*)"
     ],
     "deny": []
   }
