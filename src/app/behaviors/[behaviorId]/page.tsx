@@ -15,7 +15,6 @@ import {
   faTrash, 
   faCheck, 
   faTimes,
-  faThoughtBubble,
   faSmile,
   faCoins,
   faFrown
