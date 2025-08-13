@@ -8,6 +8,7 @@ interface Activity {
   activityName: string;
   money: number;
   positive: boolean;
+  top?: boolean;
 }
 
 export async function GET(request: Request) {
@@ -35,6 +36,7 @@ export async function GET(request: Request) {
       activityName: item.activityName,
       money: item.money,
       positive: item.positive,
+      top: item.top || false,
     })) || [];
 
     return NextResponse.json(activities);
@@ -51,7 +53,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { behaviorId, activityName, money, positive }: { behaviorId: string; activityName: string; money: number; positive: boolean } = body;
+    const { behaviorId, activityName, money, positive, top }: { behaviorId: string; activityName: string; money: number; positive: boolean; top?: boolean } = body;
     console.log('Attempting to create activity:', { behaviorId, activityName, money, positive });
 
     if (!behaviorId || !activityName || typeof activityName !== 'string' || typeof money !== 'number' || typeof positive !== 'boolean') {
@@ -87,6 +89,7 @@ export async function POST(request: Request) {
         activityName,
         money,
         positive,
+        top: top || false,
       },
       ConditionExpression: 'attribute_not_exists(partitionKey) AND attribute_not_exists(sortKey)',
     };

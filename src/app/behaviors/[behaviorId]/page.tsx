@@ -26,6 +26,7 @@ interface Activity {
   activityName: string;
   money: number;
   positive: boolean;
+  top?: boolean;
 }
 
 interface Behavior {
@@ -46,13 +47,15 @@ export default function BehaviorDetailPage() {
   const [newActivity, setNewActivity] = useState({
     name: '',
     money: 0,
-    positive: true
+    positive: true,
+    top: false
   });
   const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
   const [editingActivity, setEditingActivity] = useState({
     name: '',
     money: 0,
-    positive: true
+    positive: true,
+    top: false
   });
   const [showBannerPicker, setShowBannerPicker] = useState(false);
   const [editingBannerImage, setEditingBannerImage] = useState<string | null>(null);
@@ -108,8 +111,9 @@ export default function BehaviorDetailPage() {
         activityName: newActivity.name.trim(),
         money: newActivity.money,
         positive: newActivity.positive,
+        top: newActivity.top,
       });
-      setNewActivity({ name: '', money: 0, positive: true });
+      setNewActivity({ name: '', money: 0, positive: true, top: false });
       setShowAddActivity(false);
       fetchActivities();
     } catch (err: any) {
@@ -135,7 +139,8 @@ export default function BehaviorDetailPage() {
     setEditingActivity({
       name: activity.activityName,
       money: activity.money,
-      positive: activity.positive
+      positive: activity.positive,
+      top: activity.top || false
     });
   };
 
@@ -150,9 +155,10 @@ export default function BehaviorDetailPage() {
         activityName: editingActivity.name.trim(),
         money: editingActivity.money,
         positive: editingActivity.positive,
+        top: editingActivity.top,
       });
       setEditingActivityId(null);
-      setEditingActivity({ name: '', money: 0, positive: true });
+      setEditingActivity({ name: '', money: 0, positive: true, top: false });
       fetchActivities();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to update activity');
@@ -161,7 +167,7 @@ export default function BehaviorDetailPage() {
 
   const handleCancelEditActivity = () => {
     setEditingActivityId(null);
-    setEditingActivity({ name: '', money: 0, positive: true });
+    setEditingActivity({ name: '', money: 0, positive: true, top: false });
   };
 
   const handleBannerClick = () => {
@@ -204,9 +210,17 @@ export default function BehaviorDetailPage() {
     return <div className="p-6 text-gray-600">Loading behavior details...</div>;
   }
 
-  // Separate activities
-  const positiveActivities = activities.filter((a) => a.positive);
-  const negativeActivities = activities.filter((a) => !a.positive);
+  // Separate and sort activities (top activities first)
+  const sortActivities = (activities: Activity[]) => {
+    return activities.sort((a, b) => {
+      if (a.top && !b.top) return -1;
+      if (!a.top && b.top) return 1;
+      return 0;
+    });
+  };
+
+  const positiveActivities = sortActivities(activities.filter((a) => a.positive));
+  const negativeActivities = sortActivities(activities.filter((a) => !a.positive));
 
   return (
     <div>
@@ -279,6 +293,18 @@ export default function BehaviorDetailPage() {
                 <option value="-">-</option>
               </select>
             </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="new-activity-top"
+                checked={newActivity.top}
+                onChange={(e) => setNewActivity({ ...newActivity, top: e.target.checked })}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="new-activity-top" className="text-sm text-gray-700">
+                Pin to top (show first in list)
+              </label>
+            </div>
             <button
               onClick={handleAddActivity}
               className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
@@ -344,6 +370,18 @@ export default function BehaviorDetailPage() {
                               className="flex-1 p-3 border border-gray-300 rounded-xl text-gray-900 focus:border-green-400"
                               placeholder="Amount"
                             />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id={`edit-activity-top-${activity.activityId}`}
+                              checked={editingActivity.top}
+                              onChange={(e) => setEditingActivity({ ...editingActivity, top: e.target.checked })}
+                              className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                            />
+                            <label htmlFor={`edit-activity-top-${activity.activityId}`} className="text-sm text-gray-700">
+                              Pin to top
+                            </label>
                           </div>
                           <div className="flex gap-2 pt-2">
                             <button
@@ -461,6 +499,18 @@ export default function BehaviorDetailPage() {
                               className="flex-1 p-3 border border-gray-300 rounded-xl text-gray-900 focus:border-red-400"
                               placeholder="Amount"
                             />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id={`edit-activity-top-neg-${activity.activityId}`}
+                              checked={editingActivity.top}
+                              onChange={(e) => setEditingActivity({ ...editingActivity, top: e.target.checked })}
+                              className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                            />
+                            <label htmlFor={`edit-activity-top-neg-${activity.activityId}`} className="text-sm text-gray-700">
+                              Pin to top
+                            </label>
                           </div>
                           <div className="flex gap-2 pt-2">
                             <button

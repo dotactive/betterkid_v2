@@ -13,7 +13,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ acti
     }
 
     const body = await request.json();
-    const { activityName, money, positive } = body;
+    const { activityName, money, positive, top } = body;
 
     if (!activityName || activityName.trim() === '') {
       return NextResponse.json({ error: 'Activity name is required' }, { status: 400 });
@@ -49,11 +49,15 @@ export async function PUT(request: Request, { params }: { params: Promise<{ acti
         partitionKey: activity.partitionKey,
         sortKey: activity.sortKey,
       },
-      UpdateExpression: 'SET activityName = :name, money = :money, positive = :positive',
+      UpdateExpression: 'SET activityName = :name, money = :money, positive = :positive, #top = :top',
+      ExpressionAttributeNames: {
+        '#top': 'top'
+      },
       ExpressionAttributeValues: {
         ':name': activityName.trim(),
         ':money': money,
         ':positive': positive,
+        ':top': top || false,
       },
       ConditionExpression: 'attribute_exists(partitionKey)',
     };

@@ -88,7 +88,7 @@ function BreadcrumbComponent({ pathname }: { pathname: string | null }) {
           </>
         )}
         
-        {pathname === '/earnlose' && (
+        {pathname === '/activities' && (
           <>
             <li className="text-gray-400">/</li>
             <li className="text-gray-800 font-medium">Activities</li>
@@ -132,8 +132,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const [parentCodeInput, setParentCodeInput] = useState('');
   const [userParentCode, setUserParentCode] = useState('');
 
-  // Determine if we're in the back section
-  const isBackSection = pathname?.startsWith('/back');
+
   
   // Don't show navigation for login/register pages
   const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/';
@@ -228,7 +227,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           {/* Control buttons */}
           <div className=" mt-4 md:mt-0 ">
             <div className="flex flex-col  md:flex-row mt-5 gap-3 items-center justify-end ">
-            {!isBackSection && (
+
               <button
                 onClick={handleEditModeToggle}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer ${
@@ -239,7 +238,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               >
                 {editMode ? 'Exit Edit Mode' : 'Edit Mode'}
               </button>
-            )}
+  
             <button 
               onClick={handleLogout} 
               className="btn-2 px-4 py-2 rounded-lg font-medium transition-colors  cursor-pointer"
@@ -250,30 +249,11 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
             <nav className=" text-white-900 py-0 px-0 mt-5">
           <div className="flex justify-center gap-6 font-medium">
-            {isBackSection ? (
-              <>
-                <Link href="/back/profile" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
-                  Profile
-                </Link>
-                <Link href="/back/content-editor" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
-                  Content
-                </Link>
-                <Link href="/award-editor" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
-                  Coins
-                </Link>
-                <Link href="/back/events-editor" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
-                  Events
-                </Link>
-                <Link href="/behaviors" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
-                  Back to Front
-                </Link>
-              </>
-            ) : (
-              <>
+
                 <Link href="/behaviors" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
                   Behaviors
                 </Link>
-                <Link href="/earnlose" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
+                <Link href="/activities" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
                   Activities
                 </Link>
                 <Link href="/spend" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
@@ -287,8 +267,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                     Award Editor
                   </Link>
                 )}
-              </>
-            )}
+
+    
           </div>
         </nav>
 
@@ -307,10 +287,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 bg-white rounded-lg  p-4 border-2 border-dashed border-colour-1">
             <div className="text-center md:text-left  ">
               <h2 className="text-2xl font-bold">
-                Welcome, <span className="text-colour-2">{username || userId}</span>{isBackSection ? ' \'s parent!' : ' !'}
+                Welcome, <span className="text-colour-2">{username || userId}</span>{editMode ? ' \'s parent!' : ' !'}
               </h2>
               <div className="text-sm mt-1">
-                {isBackSection ? (
+                {editMode ? (
                   <p>Manage your child's progress</p>
                 ) : (
                   <BreadcrumbComponent pathname={pathname} />
@@ -320,7 +300,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             </div>
             <div className="background-colour-3 text-black px-6 py-3 rounded-lg shadow-md">
               <div className="text-center">
-                <div className="text-sm font-medium">{isBackSection ? 'Coins' : 'Your Super Coins'}</div>
+                <div className="text-sm font-medium">{editMode ? 'Coins' : 'Your Super Coins'}</div>
                 <div className="text-2xl font-bold">${balance?.toFixed(2)}</div>
               </div>
             </div>
