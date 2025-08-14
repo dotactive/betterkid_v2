@@ -41,10 +41,10 @@ export default function LogsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-white shadow-md rounded-md overflow-x-auto">
   
       {error && <p className="text-red-600 mb-4">{error}</p>}
-      <div className="bg-white shadow-md rounded-md overflow-x-auto">
+      <div className="">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>

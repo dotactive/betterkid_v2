@@ -20,8 +20,8 @@ const { isAuthenticated, userId } = useAuth();
   };
 
   return (
-    <main className="px-6 py-8">
-      <h1 className="text-3xl font-bold text-center mb-8">Spend Coins</h1>
+    <main className="">
+
       <div className="grid grid-cols-3 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
         <div className="bg-gradient-to-br  from-green-50 to-white rounded-2xl shadow-lg p-8 flex flex-col items-center gap-4 border border-green-200">
           <img
