@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { useAuth } from '@/hooks/useAuth';
 import { EditModeProvider, useEditMode } from '@/hooks/useEditMode';
+import { PendingMoneyProvider, usePendingMoney } from '@/hooks/usePendingMoney';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
@@ -109,6 +110,13 @@ function BreadcrumbComponent({ pathname }: { pathname: string | null }) {
           </>
         )}
         
+        {pathname === '/todolist' && (
+          <>
+            <li className="text-gray-400">/</li>
+            <li className="text-gray-800 font-medium">Todo List</li>
+          </>
+        )}
+        
         {pathname === '/award-editor' && (
           <>
             <li className="text-gray-400">/</li>
@@ -123,6 +131,7 @@ function BreadcrumbComponent({ pathname }: { pathname: string | null }) {
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, userId } = useAuth();
   const { editMode, setEditMode } = useEditMode();
+  const { pendingAmount } = usePendingMoney();
   const router = useRouter();
   const pathname = usePathname();
   const [balance, setBalance] = useState<number | null>(null);
@@ -177,6 +186,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       console.error('Failed to fetch user parent code:', err);
     }
   };
+
 
   const handleEditModeToggle = () => {
     if (editMode) {
@@ -256,6 +266,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 <Link href="/activities" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
                   Activities
                 </Link>
+                <Link href="/todolist" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
+                  Todo List
+                </Link>
                 <Link href="/spend" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
                   Spend Coins
                 </Link>
@@ -298,11 +311,21 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 )}
               </div>
             </div>
-            <div className="background-colour-3 text-black px-6 py-3 rounded-lg shadow-md">
+      <div className="flex flex-col md:flex-row gap-2">
+            <div className="background-colour-2 text-black px-6 py-3 rounded-lg shadow-md  text-white">
               <div className="text-center">
-                <div className="text-sm font-medium">{editMode ? 'Coins' : 'Your Super Coins'}</div>
+                <div className="text-sm font-medium">{editMode ? 'Pending Money' : 'Pending Rewards'}</div>
+                <div className="text-2xl font-bold">${pendingAmount.toFixed(2)}</div>
+              </div>
+            </div>
+
+            <div className="background-colour-3 text-black px-6 py-3 rounded-lg shadow-md text-white">
+              <div className="text-center">
+                <div className="text-sm font-medium">{editMode ? 'Current Balance' : 'Your Super Coins'}</div>
                 <div className="text-2xl font-bold">${balance?.toFixed(2)}</div>
               </div>
+            </div>
+
             </div>
           </div>
         </div>
@@ -370,7 +393,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <EditModeProvider>
-          <LayoutContent>{children}</LayoutContent>
+          <PendingMoneyProvider>
+            <LayoutContent>{children}</LayoutContent>
+          </PendingMoneyProvider>
         </EditModeProvider>
       </body>
     </html>
