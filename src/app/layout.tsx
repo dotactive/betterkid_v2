@@ -123,6 +123,32 @@ function BreadcrumbComponent({ pathname }: { pathname: string | null }) {
             <li className="text-gray-800 font-medium">Award Editor</li>
           </>
         )}
+        
+        {pathname === '/edit-coins' && (
+          <>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link href="/award-editor" className="hover:text-blue-600">
+                Award Editor
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li className="text-gray-800 font-medium">Edit Coins</li>
+          </>
+        )}
+        
+        {pathname === '/approve-pending' && (
+          <>
+            <li className="text-gray-400">/</li>
+            <li>
+              <Link href="/award-editor" className="hover:text-blue-600">
+                Award Editor
+              </Link>
+            </li>
+            <li className="text-gray-400">/</li>
+            <li className="text-gray-800 font-medium">Approve Pending</li>
+          </>
+        )}
       </ol>
     </nav>
   );
@@ -312,19 +338,43 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               </div>
             </div>
       <div className="flex flex-col md:flex-row gap-2">
-            <div className="background-colour-2 text-black px-6 py-3 rounded-lg shadow-md  text-white">
-              <div className="text-center">
-                <div className="text-sm font-medium">{editMode ? 'Pending Money' : 'Pending Rewards'}</div>
-                <div className="text-2xl font-bold">${pendingAmount.toFixed(2)}</div>
+            {editMode ? (
+              <Link href="/approve-pending" className="block group">
+                <div className="background-colour-2 text-black px-6 py-3 rounded-lg shadow-md text-white hover:opacity-80 transition-opacity cursor-pointer">
+                  <div className="text-center">
+                    <div className="text-sm font-medium">Pending Money</div>
+                    <div className="text-2xl font-bold">${pendingAmount.toFixed(2)}</div>
+                    <div className="text-xs opacity-75 mt-1">Click to manage</div>
+                  </div>
+                </div>
+              </Link>
+            ) : (
+              <div className="background-colour-2 text-black px-6 py-3 rounded-lg shadow-md text-white">
+                <div className="text-center">
+                  <div className="text-sm font-medium">Pending Rewards</div>
+                  <div className="text-2xl font-bold">${pendingAmount.toFixed(2)}</div>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="background-colour-3 text-black px-6 py-3 rounded-lg shadow-md text-white">
-              <div className="text-center">
-                <div className="text-sm font-medium">{editMode ? 'Current Balance' : 'Your Super Coins'}</div>
-                <div className="text-2xl font-bold">${balance?.toFixed(2)}</div>
+            {editMode ? (
+              <Link href="/edit-coins" className="block group">
+                <div className="background-colour-3 text-black px-6 py-3 rounded-lg shadow-md text-white hover:opacity-80 transition-opacity cursor-pointer">
+                  <div className="text-center">
+                    <div className="text-sm font-medium">Current Balance</div>
+                    <div className="text-2xl font-bold">${balance?.toFixed(2)}</div>
+                    <div className="text-xs opacity-75 mt-1">Click to edit</div>
+                  </div>
+                </div>
+              </Link>
+            ) : (
+              <div className="background-colour-3 text-black px-6 py-3 rounded-lg shadow-md text-white">
+                <div className="text-center">
+                  <div className="text-sm font-medium">Your Super Coins</div>
+                  <div className="text-2xl font-bold">${balance?.toFixed(2)}</div>
+                </div>
               </div>
-            </div>
+            )}
 
             </div>
           </div>

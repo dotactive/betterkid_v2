@@ -22,6 +22,8 @@ export default function LoginPage() {
       if (response.data.success) {
         // Store userId in local storage
         localStorage.setItem('userId', response.data.userId);
+        // Dispatch custom event to notify useAuth hook of the change
+        window.dispatchEvent(new Event('auth-changed'));
         router.push('/behaviors'); // Redirect to user page using static route
       }
     } catch (err: any) {

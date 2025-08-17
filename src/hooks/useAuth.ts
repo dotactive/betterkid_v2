@@ -29,8 +29,31 @@ export const useAuth = (): AuthState => {
       }
     };
 
-    const timer = setTimeout(checkAuth, 50); // Reduced delay to ensure localStorage is ready
-    return () => clearTimeout(timer);
+    // Initial check with minimal delay
+    const timer = setTimeout(checkAuth, 10);
+
+    // Listen for localStorage changes (for cross-tab/component sync)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'userId') {
+        console.log('localStorage change detected for userId:', e.newValue);
+        checkAuth();
+      }
+    };
+
+    // Listen for custom storage events (for same-tab updates)
+    const handleCustomStorageChange = () => {
+      console.log('Custom storage change detected');
+      checkAuth();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('auth-changed', handleCustomStorageChange);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth-changed', handleCustomStorageChange);
+    };
   }, [router]);
 
   return { isAuthenticated, userId };
