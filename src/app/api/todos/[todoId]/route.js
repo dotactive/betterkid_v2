@@ -43,7 +43,7 @@ export async function PUT(request, context) {
       text: text !== undefined && typeof text === 'string' && text.trim() !== '' ? text.trim() : existingTodo.text,
       completed: completed !== undefined ? completed : existingTodo.completed,
       money: money !== undefined ? money : existingTodo.money,
-      repeat: repeat !== undefined && ['daily', 'weekly', 'once'].includes(repeat) ? repeat : existingTodo.repeat,
+      repeat: repeat !== undefined && ['daily', 'weekly', 'monthly', 'once'].includes(repeat) ? repeat : existingTodo.repeat,
       createdAt: existingTodo.createdAt,
     };
 

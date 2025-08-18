@@ -5,9 +5,13 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface BalanceLog {
   logId: string;
-  balanceBefore: number;
-  balanceAfter: number;
+  balanceBefore?: number;
+  balanceAfter?: number;
+  amount?: number;
+  reason?: string;
   note?: string;
+  type?: string;
+  source?: string;
   timestamp: string;
 }
 
@@ -49,20 +53,48 @@ export default function LogsPage() {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Before</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">After</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Note</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {logs.map((log) => (
-              <tr key={log.logId}>
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{new Date(log.timestamp).toLocaleString()}</td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${log.balanceBefore.toFixed(2)}</td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${log.balanceAfter.toFixed(2)}</td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{log.note || '-'}</td>
+            {logs.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                  <div className="text-4xl mb-2">📋</div>
+                  <p>No activity logs yet!</p>
+                  <p className="text-sm">Complete some todos or activities to see your progress here.</p>
+                </td>
               </tr>
-            ))}
+            ) : (
+              logs.map((log) => (
+                <tr key={log.logId}>
+                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
+                    {new Date(log.timestamp).toLocaleString()}
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-sm">
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                      log.type === 'earn' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {log.type || 'unknown'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
+                    <span className={log.type === 'earn' ? 'text-green-600' : 'text-red-600'}>
+                      {log.type === 'earn' ? '+' : '-'}${(log.amount || 0).toFixed(2)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 text-sm text-gray-700">
+                    {log.reason || log.note || '-'}
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                    {log.source || '-'}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

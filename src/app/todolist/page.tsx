@@ -11,7 +11,7 @@ interface TodoItem {
   text: string;
   completed: boolean;
   money: number;
-  repeat: 'daily' | 'weekly' | 'once';
+  repeat: 'daily' | 'weekly' | 'monthly' | 'once';
   createdAt: string;
 }
 
@@ -24,14 +24,15 @@ export default function TodoListPage() {
   const [newTodo, setNewTodo] = useState({
     text: '',
     money: 0,
-    repeat: 'once' as 'daily' | 'weekly' | 'once'
+    repeat: 'once' as 'daily' | 'weekly' | 'monthly' | 'once'
   });
   const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
   const [editingTodo, setEditingTodo] = useState({
     text: '',
     money: 0,
-    repeat: 'once' as 'daily' | 'weekly' | 'once'
+    repeat: 'once' as 'daily' | 'weekly' | 'monthly' | 'once'
   });
+  const [resetStatus, setResetStatus] = useState('');
 
   useEffect(() => {
     if (isAuthenticated && userId) {
@@ -149,10 +150,28 @@ export default function TodoListPage() {
     setEditingTodo({ text: '', money: 0, repeat: 'once' });
   };
 
+  const handleResetTodos = async (resetType: 'daily' | 'weekly' | 'monthly') => {
+    if (!confirm(`Are you sure you want to reset all completed ${resetType} todos? This will mark them as incomplete again.`)) {
+      return;
+    }
+    
+    try {
+      setResetStatus(`Resetting ${resetType} todos...`);
+      const response = await axios.post('/api/todos/reset', { resetType });
+      setResetStatus(`✅ ${response.data.message}`);
+      fetchTodos(); // Refresh the list
+      setTimeout(() => setResetStatus(''), 5000);
+    } catch (err: any) {
+      setResetStatus(`❌ Failed to reset ${resetType} todos: ${err.response?.data?.error || err.message}`);
+      setTimeout(() => setResetStatus(''), 5000);
+    }
+  };
+
   const getRepeatColor = (repeat: string) => {
     switch (repeat) {
       case 'daily': return 'bg-green-100 text-green-800';
       case 'weekly': return 'bg-blue-100 text-blue-800';
+      case 'monthly': return 'bg-purple-100 text-purple-800';
       case 'once': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -171,7 +190,39 @@ export default function TodoListPage() {
       <div className="bg-white rounded-lg shadow-lg p-6">
           
         {error && <p className="text-red-600 mb-4 p-3 bg-red-50 rounded">{error}</p>}
+        {resetStatus && <p className="mb-4 p-3 bg-blue-50 rounded text-blue-800">{resetStatus}</p>}
         
+        {/* Reset Controls - Only in Edit Mode */}
+        {editMode && (
+          <div className="bg-orange-50 p-4 rounded-lg mb-6">
+            <h2 className="text-lg font-semibold text-orange-800 mb-3">Reset Completed Todos</h2>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => handleResetTodos('daily')}
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                🔄 Reset Daily Todos
+              </button>
+              <button
+                onClick={() => handleResetTodos('weekly')}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                🔄 Reset Weekly Todos
+              </button>
+              <button
+                onClick={() => handleResetTodos('monthly')}
+                className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                🔄 Reset Monthly Todos
+              </button>
+            </div>
+            <p className="text-sm text-orange-700 mt-2">
+              ℹ️ This will mark all completed todos of the selected type as incomplete again. 
+              Normally this happens automatically: daily (every 0:00), weekly (Monday 0:00), monthly (1st 0:00).
+            </p>
+          </div>
+        )}
+
         {/* Add New Todo - Only in Edit Mode */}
         {editMode && (
           <div className="bg-gray-50 p-4 rounded-lg mb-6">
@@ -198,12 +249,13 @@ export default function TodoListPage() {
               </div>
               <select
                 value={newTodo.repeat}
-                onChange={(e) => setNewTodo({ ...newTodo, repeat: e.target.value as 'daily' | 'weekly' | 'once' })}
+                onChange={(e) => setNewTodo({ ...newTodo, repeat: e.target.value as 'daily' | 'weekly' | 'monthly' | 'once' })}
                 className="p-3 border rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="once">Once</option>
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
               </select>
             </div>
             <button
@@ -247,12 +299,13 @@ export default function TodoListPage() {
                     </div>
                     <select
                       value={editingTodo.repeat}
-                      onChange={(e) => setEditingTodo({ ...editingTodo, repeat: e.target.value as 'daily' | 'weekly' | 'once' })}
+                      onChange={(e) => setEditingTodo({ ...editingTodo, repeat: e.target.value as 'daily' | 'weekly' | 'monthly' | 'once' })}
                       className="p-2 border rounded text-gray-900 focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="once">Once</option>
                       <option value="daily">Daily</option>
                       <option value="weekly">Weekly</option>
+                      <option value="monthly">Monthly</option>
                     </select>
                     <div className="col-span-full flex gap-2 justify-end">
                       <button

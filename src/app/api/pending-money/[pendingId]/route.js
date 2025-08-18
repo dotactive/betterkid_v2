@@ -73,8 +73,48 @@ export async function POST(request, context) {
       const pendingItems = pendingData.Items || [];
       
       let totalAmount = 0;
+      const logEntries = [];
+      
       for (const item of pendingItems) {
         totalAmount += item.amount || 0;
+        
+        // If this is a todo item, also delete the completed todo and log it
+        if (item.type === 'todo' && item.referenceId) {
+          // Delete the completed todo
+          const todoDeleteParams = {
+            TableName: 'betterkid_v2',
+            Key: {
+              partitionKey: `USER#${userId}`,
+              sortKey: `TODO#${item.referenceId}`,
+            },
+          };
+          
+          try {
+            await dynamoDb.send(new DeleteCommand(todoDeleteParams));
+            
+            // Add to balance log
+            const logId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const logParams = {
+              TableName: 'betterkid_v2',
+              Item: {
+                partitionKey: `USER#${userId}`,
+                sortKey: `BALANCELOG#${logId}`,
+                logId,
+                userId,
+                amount: item.amount,
+                reason: item.reason,
+                type: 'earn',
+                source: 'completed_todo',
+                timestamp: new Date().toISOString(),
+              },
+            };
+            await dynamoDb.send(new PutCommand(logParams));
+            logEntries.push(`${item.reason} (+$${item.amount})`);
+          } catch (error) {
+            console.error(`Failed to delete todo ${item.referenceId}:`, error);
+            // Continue with other items even if one fails
+          }
+        }
         
         // Delete the pending item
         const deleteParams = {
@@ -146,6 +186,43 @@ export async function POST(request, context) {
       }
       
       const amount = pending.amount || 0;
+      
+      // If this is a todo item, also delete the completed todo and log it
+      if (pending.type === 'todo' && pending.referenceId) {
+        // Delete the completed todo
+        const todoDeleteParams = {
+          TableName: 'betterkid_v2',
+          Key: {
+            partitionKey: `USER#${userId}`,
+            sortKey: `TODO#${pending.referenceId}`,
+          },
+        };
+        
+        try {
+          await dynamoDb.send(new DeleteCommand(todoDeleteParams));
+          
+          // Add to balance log
+          const logId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          const logParams = {
+            TableName: 'betterkid_v2',
+            Item: {
+              partitionKey: `USER#${userId}`,
+              sortKey: `BALANCELOG#${logId}`,
+              logId,
+              userId,
+              amount: pending.amount,
+              reason: pending.reason,
+              type: 'earn',
+              source: 'completed_todo',
+              timestamp: new Date().toISOString(),
+            },
+          };
+          await dynamoDb.send(new PutCommand(logParams));
+        } catch (error) {
+          console.error(`Failed to delete todo ${pending.referenceId}:`, error);
+          // Continue with approval even if todo deletion fails
+        }
+      }
       
       // Delete the pending item
       const deleteParams = {

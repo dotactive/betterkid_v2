@@ -9,7 +9,7 @@ interface Todo {
   text: string;
   completed: boolean;
   money: number;
-  repeat: 'daily' | 'weekly' | 'once';
+  repeat: 'daily' | 'weekly' | 'monthly' | 'once';
   createdAt: string;
 }
 
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
       text: string;
       completed?: boolean;
       money?: number;
-      repeat?: 'daily' | 'weekly' | 'once';
+      repeat?: 'daily' | 'weekly' | 'monthly' | 'once';
     } = body;
     console.log('POST /api/todos, received:', { userId, text, completed, money, repeat });
 

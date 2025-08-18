@@ -126,12 +126,7 @@ function BreadcrumbComponent({ pathname }: { pathname: string | null }) {
         
         {pathname === '/edit-coins' && (
           <>
-            <li className="text-gray-400">/</li>
-            <li>
-              <Link href="/award-editor" className="hover:text-blue-600">
-                Award Editor
-              </Link>
-            </li>
+
             <li className="text-gray-400">/</li>
             <li className="text-gray-800 font-medium">Edit Coins</li>
           </>
@@ -139,12 +134,7 @@ function BreadcrumbComponent({ pathname }: { pathname: string | null }) {
         
         {pathname === '/approve-pending' && (
           <>
-            <li className="text-gray-400">/</li>
-            <li>
-              <Link href="/award-editor" className="hover:text-blue-600">
-                Award Editor
-              </Link>
-            </li>
+
             <li className="text-gray-400">/</li>
             <li className="text-gray-800 font-medium">Approve Pending</li>
           </>
@@ -301,11 +291,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 <Link href="/logs" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
                   Logs
                 </Link>
-                {editMode && (
-                  <Link href="/award-editor" className="text-yellow-300  hover:text-blue-600 font-semibold transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
-                    Award Editor
-                  </Link>
-                )}
+
 
     
           </div>
