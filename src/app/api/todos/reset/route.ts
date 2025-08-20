@@ -3,8 +3,9 @@ import { ScanCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import dynamoDb from '@/lib/aws-config';
 
 export async function POST(request: Request) {
+  let body: any;
   try {
-    const body = await request.json();
+    body = await request.json();
     const { resetType } = body; // 'daily', 'weekly', or 'monthly'
     
     if (!resetType || !['daily', 'weekly', 'monthly'].includes(resetType)) {
@@ -13,17 +14,18 @@ export async function POST(request: Request) {
 
     console.log(`Starting ${resetType} todo reset...`);
 
-    // Get all completed todos of the specified type
+    // Get all completed todos (both 'pending' and 'true') of the specified type
     const params = {
       TableName: 'betterkid_v2',
-      FilterExpression: 'begins_with(sortKey, :sk) AND #repeat = :repeat AND completed = :completed',
+      FilterExpression: 'begins_with(sortKey, :sk) AND #repeat = :repeat AND (completed = :completedTrue OR completed = :completedPending)',
       ExpressionAttributeNames: {
         '#repeat': 'repeat',
       },
       ExpressionAttributeValues: {
         ':sk': 'TODO#',
         ':repeat': resetType,
-        ':completed': true,
+        ':completedTrue': 'true',
+        ':completedPending': 'pending',
       },
     };
 
@@ -34,14 +36,14 @@ export async function POST(request: Request) {
 
     let resetCount = 0;
     
-    // Reset each todo by setting completed to false
+    // Reset each todo by setting completed to 'false'
     for (const todo of todosToReset) {
       try {
         const updateParams = {
           TableName: 'betterkid_v2',
           Item: {
             ...todo,
-            completed: false,
+            completed: 'false',
             lastResetAt: new Date().toISOString(),
           },
         };
@@ -70,25 +72,27 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+  let resetType: string | null = null;
   try {
     const { searchParams } = new URL(request.url);
-    const resetType = searchParams.get('resetType');
+    resetType = searchParams.get('resetType');
     
     if (!resetType || !['daily', 'weekly', 'monthly'].includes(resetType)) {
       return NextResponse.json({ error: 'Valid resetType is required (daily, weekly, monthly)' }, { status: 400 });
     }
 
-    // Get all completed todos of the specified type to show what would be reset
+    // Get all completed todos (both 'pending' and 'true') of the specified type to show what would be reset
     const params = {
       TableName: 'betterkid_v2',
-      FilterExpression: 'begins_with(sortKey, :sk) AND #repeat = :repeat AND completed = :completed',
+      FilterExpression: 'begins_with(sortKey, :sk) AND #repeat = :repeat AND (completed = :completedTrue OR completed = :completedPending)',
       ExpressionAttributeNames: {
         '#repeat': 'repeat',
       },
       ExpressionAttributeValues: {
         ':sk': 'TODO#',
         ':repeat': resetType,
-        ':completed': true,
+        ':completedTrue': 'true',
+        ':completedPending': 'pending',
       },
     };
 

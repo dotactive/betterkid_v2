@@ -7,7 +7,7 @@ interface Todo {
   todoId: string;
   userId: string;
   text: string;
-  completed: boolean;
+  completed: 'false' | 'pending' | 'true';
   money: number;
   repeat: 'daily' | 'weekly' | 'monthly' | 'once';
   createdAt: string;
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
       todoId: item.todoId,
       userId: item.userId,
       text: item.text,
-      completed: item.completed || false,
+      completed: item.completed || 'false',
       money: item.money || 0,
       repeat: item.repeat || 'once',
       createdAt: item.createdAt || new Date().toISOString(),
@@ -61,10 +61,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { userId, text, completed = false, money = 0, repeat = 'once' }: {
+    const { userId, text, completed = 'false', money = 0, repeat = 'once' }: {
       userId: string;
       text: string;
-      completed?: boolean;
+      completed?: 'false' | 'pending' | 'true';
       money?: number;
       repeat?: 'daily' | 'weekly' | 'monthly' | 'once';
     } = body;

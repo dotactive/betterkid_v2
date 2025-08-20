@@ -78,19 +78,49 @@ export async function POST(request, context) {
       for (const item of pendingItems) {
         totalAmount += item.amount || 0;
         
-        // If this is a todo item, also delete the completed todo and log it
+        // If this is a todo item, update the todo status to 'true' and log it
         if (item.type === 'todo' && item.referenceId) {
-          // Delete the completed todo
-          const todoDeleteParams = {
+          // First get the existing todo
+          const todoQueryParams = {
             TableName: 'betterkid_v2',
-            Key: {
-              partitionKey: `USER#${userId}`,
-              sortKey: `TODO#${item.referenceId}`,
+            KeyConditionExpression: 'partitionKey = :pk AND sortKey = :sk',
+            ExpressionAttributeValues: {
+              ':pk': `USER#${userId}`,
+              ':sk': `TODO#${item.referenceId}`,
             },
           };
           
           try {
-            await dynamoDb.send(new DeleteCommand(todoDeleteParams));
+            const todoData = await dynamoDb.send(new QueryCommand(todoQueryParams));
+            const existingTodo = todoData.Items?.[0];
+            
+            if (existingTodo) {
+              // Check if this is a 'once' todo - if so, delete it; otherwise update to 'true'
+              if (existingTodo.repeat === 'once') {
+                // Delete the 'once' todo since it won't repeat
+                const todoDeleteParams = {
+                  TableName: 'betterkid_v2',
+                  Key: {
+                    partitionKey: existingTodo.partitionKey,
+                    sortKey: existingTodo.sortKey,
+                  },
+                };
+                await dynamoDb.send(new DeleteCommand(todoDeleteParams));
+                console.log(`Deleted 'once' todo: ${existingTodo.text}`);
+              } else {
+                // Update recurring todo status to 'true' (approved)
+                const todoUpdateParams = {
+                  TableName: 'betterkid_v2',
+                  Item: {
+                    ...existingTodo,
+                    completed: 'true',
+                    approvedAt: new Date().toISOString(),
+                  },
+                };
+                await dynamoDb.send(new PutCommand(todoUpdateParams));
+                console.log(`Approved recurring todo: ${existingTodo.text}`);
+              }
+            }
             
             // Add to balance log
             const logId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -111,7 +141,7 @@ export async function POST(request, context) {
             await dynamoDb.send(new PutCommand(logParams));
             logEntries.push(`${item.reason} (+$${item.amount})`);
           } catch (error) {
-            console.error(`Failed to delete todo ${item.referenceId}:`, error);
+            console.error(`Failed to update todo ${item.referenceId}:`, error);
             // Continue with other items even if one fails
           }
         }
@@ -128,6 +158,27 @@ export async function POST(request, context) {
       }
       
       if (totalAmount > 0) {
+        // Check user settings to see if complete awards are enabled
+        const userSettingsData = await dynamoDb.send(new QueryCommand({
+          TableName: 'betterkid_v2',
+          KeyConditionExpression: 'partitionKey = :pk AND sortKey = :sk',
+          ExpressionAttributeValues: {
+            ':pk': `USER#${userId}`,
+            ':sk': 'METADATA',
+          },
+        }));
+        
+        const userSettings = userSettingsData.Items?.[0];
+        const completeAwardEnabled = userSettings?.completeAwardEnabled || false;
+        
+        if (!completeAwardEnabled) {
+          return NextResponse.json({ 
+            message: 'Complete awards are disabled. No money was added to balance.',
+            totalAmount: 0,
+            logEntries: logEntries
+          });
+        }
+
         // Add to user balance
         const balanceParams = {
           TableName: 'betterkid_v2',
@@ -187,19 +238,49 @@ export async function POST(request, context) {
       
       const amount = pending.amount || 0;
       
-      // If this is a todo item, also delete the completed todo and log it
+      // If this is a todo item, update the todo status to 'true' and log it
       if (pending.type === 'todo' && pending.referenceId) {
-        // Delete the completed todo
-        const todoDeleteParams = {
+        // First get the existing todo
+        const todoQueryParams = {
           TableName: 'betterkid_v2',
-          Key: {
-            partitionKey: `USER#${userId}`,
-            sortKey: `TODO#${pending.referenceId}`,
+          KeyConditionExpression: 'partitionKey = :pk AND sortKey = :sk',
+          ExpressionAttributeValues: {
+            ':pk': `USER#${userId}`,
+            ':sk': `TODO#${pending.referenceId}`,
           },
         };
         
         try {
-          await dynamoDb.send(new DeleteCommand(todoDeleteParams));
+          const todoData = await dynamoDb.send(new QueryCommand(todoQueryParams));
+          const existingTodo = todoData.Items?.[0];
+          
+          if (existingTodo) {
+            // Check if this is a 'once' todo - if so, delete it; otherwise update to 'true'
+            if (existingTodo.repeat === 'once') {
+              // Delete the 'once' todo since it won't repeat
+              const todoDeleteParams = {
+                TableName: 'betterkid_v2',
+                Key: {
+                  partitionKey: existingTodo.partitionKey,
+                  sortKey: existingTodo.sortKey,
+                },
+              };
+              await dynamoDb.send(new DeleteCommand(todoDeleteParams));
+              console.log(`Deleted 'once' todo: ${existingTodo.text}`);
+            } else {
+              // Update recurring todo status to 'true' (approved)
+              const todoUpdateParams = {
+                TableName: 'betterkid_v2',
+                Item: {
+                  ...existingTodo,
+                  completed: 'true',
+                  approvedAt: new Date().toISOString(),
+                },
+              };
+              await dynamoDb.send(new PutCommand(todoUpdateParams));
+              console.log(`Approved recurring todo: ${existingTodo.text}`);
+            }
+          }
           
           // Add to balance log
           const logId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -219,8 +300,8 @@ export async function POST(request, context) {
           };
           await dynamoDb.send(new PutCommand(logParams));
         } catch (error) {
-          console.error(`Failed to delete todo ${pending.referenceId}:`, error);
-          // Continue with approval even if todo deletion fails
+          console.error(`Failed to update todo ${pending.referenceId}:`, error);
+          // Continue with approval even if todo update fails
         }
       }
       
@@ -233,6 +314,26 @@ export async function POST(request, context) {
         },
       };
       await dynamoDb.send(new DeleteCommand(deleteParams));
+      
+      // Check user settings to see if complete awards are enabled
+      const userSettingsData = await dynamoDb.send(new QueryCommand({
+        TableName: 'betterkid_v2',
+        KeyConditionExpression: 'partitionKey = :pk AND sortKey = :sk',
+        ExpressionAttributeValues: {
+          ':pk': `USER#${userId}`,
+          ':sk': 'METADATA',
+        },
+      }));
+      
+      const userSettings = userSettingsData.Items?.[0];
+      const completeAwardEnabled = userSettings?.completeAwardEnabled || false;
+      
+      if (!completeAwardEnabled) {
+        return NextResponse.json({ 
+          message: 'Complete awards are disabled. No money was added to balance.',
+          amount: 0
+        });
+      }
       
       // Add to user balance
       const balanceData = await dynamoDb.send(new QueryCommand({

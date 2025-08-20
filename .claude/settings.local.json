@@ -13,7 +13,8 @@
       "Bash(curl:*)",
       "Bash(mv:*)",
       "Bash(cp:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(PORT=3015 npm run dev)"
     ],
     "deny": []
   }

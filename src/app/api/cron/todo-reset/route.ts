@@ -8,13 +8,13 @@ export async function GET(request: Request) {
     const hour = now.getHours();
     const minute = now.getMinutes();
 
-    // Check if it's close to midnight (0:00) - allowing for some flexibility
-    const isNearMidnight = hour === 0 && minute < 5;
+    // Check if it's close to 21:10 - allowing for some flexibility
+    const isResetTime = hour === 21 && minute >= 10 && minute < 15;
 
     const results = [];
 
-    if (isNearMidnight) {
-      // Daily reset every day at 0:00
+    if (isResetTime) {
+      // Daily reset every day at 21:10
       console.log('Performing daily todo reset...');
       const dailyResetResponse = await fetch(`${request.url.replace('/cron/todo-reset', '/todos/reset')}`, {
         method: 'POST',
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
       const dailyResult = await dailyResetResponse.json();
       results.push({ type: 'daily', ...dailyResult });
 
-      // Weekly reset every Monday at 0:00
+      // Weekly reset every Monday at 21:10
       if (dayOfWeek === 1) { // Monday
         console.log('Performing weekly todo reset...');
         const weeklyResetResponse = await fetch(`${request.url.replace('/cron/todo-reset', '/todos/reset')}`, {
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
         results.push({ type: 'weekly', ...weeklyResult });
       }
 
-      // Monthly reset every 1st of the month at 0:00
+      // Monthly reset every 1st of the month at 21:10
       if (dayOfMonth === 1) {
         console.log('Performing monthly todo reset...');
         const monthlyResetResponse = await fetch(`${request.url.replace('/cron/todo-reset', '/todos/reset')}`, {
@@ -53,7 +53,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ 
         message: 'No resets performed - not the scheduled time',
         currentTime: now.toISOString(),
-        nextDailyReset: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0).toISOString(),
+        nextDailyReset: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 21, 10, 0).toISOString(),
         nextWeeklyReset: getNextMonday(now).toISOString(),
         nextMonthlyReset: getNextFirstOfMonth(now).toISOString(),
       });
@@ -77,27 +77,27 @@ export async function GET(request: Request) {
 function getNextMonday(date: Date): Date {
   const nextMonday = new Date(date);
   const daysUntilMonday = (1 - date.getDay() + 7) % 7;
-  if (daysUntilMonday === 0 && (date.getHours() > 0 || date.getMinutes() > 0)) {
+  if (daysUntilMonday === 0 && (date.getHours() > 21 || (date.getHours() === 21 && date.getMinutes() >= 10))) {
     nextMonday.setDate(date.getDate() + 7);
   } else {
     nextMonday.setDate(date.getDate() + daysUntilMonday);
   }
-  nextMonday.setHours(0, 0, 0, 0);
+  nextMonday.setHours(21, 10, 0, 0);
   return nextMonday;
 }
 
 function getNextFirstOfMonth(date: Date): Date {
   const nextFirst = new Date(date);
-  if (date.getDate() === 1 && (date.getHours() > 0 || date.getMinutes() > 0)) {
-    // If it's already the 1st but past midnight, go to next month
+  if (date.getDate() === 1 && (date.getHours() > 21 || (date.getHours() === 21 && date.getMinutes() >= 10))) {
+    // If it's already the 1st but past 21:10, go to next month
     nextFirst.setMonth(date.getMonth() + 1, 1);
   } else if (date.getDate() > 1) {
     // If it's past the 1st, go to the 1st of next month
     nextFirst.setMonth(date.getMonth() + 1, 1);
   } else {
-    // It's the 1st and before/at midnight
+    // It's the 1st and before/at 21:10
     nextFirst.setDate(1);
   }
-  nextFirst.setHours(0, 0, 0, 0);
+  nextFirst.setHours(21, 10, 0, 0);
   return nextFirst;
 }

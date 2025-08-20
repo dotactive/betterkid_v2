@@ -57,8 +57,8 @@ export async function PUT(request, context) {
     
     // Handle pending money based on completion status changes
     if (completed !== undefined) {
-      // If todo is being marked as completed and has money value, add to pending money
-      if (completed === true && !existingTodo.completed && updateItem.money > 0) {
+      // If todo is being marked as pending (false -> pending) and has money value, add to pending money
+      if (completed === 'pending' && existingTodo.completed === 'false' && updateItem.money > 0) {
         const pendingParams = {
           TableName: 'betterkid_v2',
           Item: {
@@ -75,11 +75,11 @@ export async function PUT(request, context) {
         };
         
         await dynamoDb.send(new PutCommand(pendingParams));
-        console.log(`Added $${updateItem.money} to pending money for completing todo: ${updateItem.text}`);
+        console.log(`Added $${updateItem.money} to pending money for todo pending approval: ${updateItem.text}`);
       }
       
-      // If todo is being marked as incomplete and was previously completed, remove pending money
-      if (completed === false && existingTodo.completed && updateItem.money > 0) {
+      // If todo is being marked as false from pending/true, remove pending money
+      if (completed === 'false' && (existingTodo.completed === 'pending' || existingTodo.completed === 'true') && updateItem.money > 0) {
         // Find and remove pending money entries for this todo
         const pendingParams = {
           TableName: 'betterkid_v2',
@@ -104,9 +104,12 @@ export async function PUT(request, context) {
             },
           };
           await dynamoDb.send(new DeleteCommand(deleteParams));
-          console.log(`Removed pending money for uncompleted todo: ${updateItem.text}`);
+          console.log(`Removed pending money for reset todo: ${updateItem.text}`);
         }
       }
+      
+      // If todo is being approved (pending -> true), the pending money stays in place
+      // It will be handled by the approve-pending page
     }
     
     return NextResponse.json({ message: 'Todo updated successfully' });

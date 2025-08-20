@@ -291,6 +291,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 <Link href="/logs" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
                   Logs
                 </Link>
+                <Link href="/settings" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
+                  ⚙️ Settings
+                </Link>
 
 
     

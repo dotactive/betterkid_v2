@@ -9,7 +9,7 @@ interface TodoItem {
   todoId: string;
   userId: string;
   text: string;
-  completed: boolean;
+  completed: 'false' | 'pending' | 'true';
   money: number;
   repeat: 'daily' | 'weekly' | 'monthly' | 'once';
   createdAt: string;
@@ -33,21 +33,157 @@ export default function TodoListPage() {
     repeat: 'once' as 'daily' | 'weekly' | 'monthly' | 'once'
   });
   const [resetStatus, setResetStatus] = useState('');
+  const [countdown, setCountdown] = useState({ hours: 0, minutes: 0, seconds: 0 });
+  const [penaltyAmount, setPenaltyAmount] = useState(0.5);
+  const [resetTime, setResetTime] = useState('21:10');
+  const [uncompletedCount, setUncompletedCount] = useState(0);
 
   useEffect(() => {
     if (isAuthenticated && userId) {
       fetchTodos();
+      checkAndPerformAutoReset();
     }
+    // Initialize countdown timer immediately
+    updateCountdown();
+  }, [isAuthenticated, userId]);
+
+  useEffect(() => {
+    // Check for auto-reset every minute when the page is active
+    const resetInterval = setInterval(() => {
+      if (isAuthenticated && userId) {
+        checkAndPerformAutoReset();
+      }
+    }, 60000); // Check every minute
+
+    // Update countdown every second
+    const countdownInterval = setInterval(() => {
+      updateCountdown();
+    }, 1000);
+
+    return () => {
+      clearInterval(resetInterval);
+      clearInterval(countdownInterval);
+    };
   }, [isAuthenticated, userId]);
 
   const fetchTodos = async () => {
     if (!userId) return;
     try {
       const response = await axios.get(`/api/todos?userId=${encodeURIComponent(userId)}`);
-      setTodos(response.data || []);
+      const todoList = response.data || [];
+      setTodos(todoList);
+      
+      // Count uncompleted daily todos
+      const uncompletedDaily = todoList.filter(
+        (todo: TodoItem) => todo.repeat === 'daily' && todo.completed === 'false'
+      ).length;
+      setUncompletedCount(uncompletedDaily);
     } catch (err: any) {
       console.error('Failed to fetch todos:', err);
       setError(err.response?.data?.error || 'Failed to fetch todos');
+    }
+  };
+
+  const checkAndPerformAutoReset = async () => {
+    try {
+      const now = new Date();
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+      const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday
+      const dayOfMonth = now.getDate();
+      
+      // Check if it's between 21:10 and 21:15 (to handle slight timing variations)
+      const isResetTime = hour === 21 && minute >= 10 && minute < 15;
+      
+      if (!isResetTime) return;
+
+      // Get the last reset dates from localStorage to avoid multiple resets
+      const lastDailyReset = localStorage.getItem('lastDailyReset');
+      const lastWeeklyReset = localStorage.getItem('lastWeeklyReset');
+      const lastMonthlyReset = localStorage.getItem('lastMonthlyReset');
+      
+      const today = now.toDateString();
+      
+      // Daily reset - every day at 21:10
+      if (lastDailyReset !== today) {
+        console.log('Performing automatic daily approval and reset...');
+        await performAutoApprovalAndReset('daily');
+        localStorage.setItem('lastDailyReset', today);
+      }
+      
+      // Weekly reset - every Monday at 21:10
+      if (dayOfWeek === 1 && lastWeeklyReset !== today) {
+        console.log('Performing automatic weekly approval and reset...');
+        await performAutoApprovalAndReset('weekly');
+        localStorage.setItem('lastWeeklyReset', today);
+      }
+      
+      // Monthly reset - every 1st of the month at 21:10
+      if (dayOfMonth === 1 && lastMonthlyReset !== today) {
+        console.log('Performing automatic monthly approval and reset...');
+        await performAutoApprovalAndReset('monthly');
+        localStorage.setItem('lastMonthlyReset', today);
+      }
+    } catch (error) {
+      console.error('Error in automatic reset check:', error);
+    }
+  };
+
+  const performAutoApprovalAndReset = async (resetType: 'daily' | 'weekly' | 'monthly') => {
+    try {
+      // Step 1: Check for penalty on daily todos (before approval/reset)
+      if (resetType === 'daily') {
+        console.log(`💰 Checking for penalty on uncompleted daily todos...`);
+        const penaltyResponse = await axios.post('/api/todos/apply-penalty', { 
+          userId,
+          penaltyAmount: penaltyAmount 
+        });
+        console.log(`✅ Penalty check completed:`, penaltyResponse.data.message);
+      }
+      
+      // Step 2: Auto-approve all pending todos of this type
+      console.log(`🔄 Auto-approving pending ${resetType} todos...`);
+      const approvalResponse = await axios.post('/api/todos/auto-approve', { resetType });
+      console.log(`✅ Auto-approval completed:`, approvalResponse.data.message);
+      
+      // Step 3: Reset all todos of this type back to 'false'
+      console.log(`🔄 Resetting ${resetType} todos to incomplete...`);
+      const resetResponse = await axios.post('/api/todos/reset', { resetType });
+      console.log(`✅ Reset completed:`, resetResponse.data.message);
+      
+      fetchTodos(); // Refresh the todo list
+    } catch (error) {
+      console.error(`❌ Failed to perform automatic ${resetType} approval and reset:`, error);
+    }
+  };
+
+  const updateCountdown = () => {
+    const now = new Date();
+    
+    // Parse reset time (e.g., "21:10" -> hour: 21, minute: 10)
+    const [hour, minute] = resetTime.split(':').map(Number);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0);
+    
+    let nextResetTime: Date;
+    
+    // If current time is before reset time today, next reset is today
+    if (now < today) {
+      nextResetTime = today;
+    } else {
+      // Otherwise, next reset is tomorrow at the same time
+      nextResetTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, hour, minute, 0);
+    }
+    
+    const timeUntilReset = nextResetTime.getTime() - now.getTime();
+    
+    if (timeUntilReset > 0) {
+      const hours = Math.floor(timeUntilReset / (1000 * 60 * 60));
+      const minutes = Math.floor((timeUntilReset % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeUntilReset % (1000 * 60)) / 1000);
+      
+      setCountdown({ hours, minutes, seconds });
+    } else {
+      setCountdown({ hours: 0, minutes: 0, seconds: 0 });
     }
   };
 
@@ -63,7 +199,7 @@ export default function TodoListPage() {
         text: newTodo.text.trim(),
         money: newTodo.money,
         repeat: newTodo.repeat,
-        completed: false
+        completed: 'false'
       });
       setNewTodo({ text: '', money: 0, repeat: 'once' });
       fetchTodos();
@@ -72,25 +208,53 @@ export default function TodoListPage() {
     }
   };
 
-  const handleToggleComplete = async (todoId: string, completed: boolean) => {
+  const handleToggleComplete = async (todoId: string, currentStatus: 'false' | 'pending' | 'true') => {
     if (!userId) return;
     
     // Find the todo to get its money value
     const todo = todos.find(t => t.todoId === todoId);
     if (!todo) return;
     
+    // Determine next status based on current status and edit mode
+    let nextStatus: 'false' | 'pending' | 'true';
+    
+    if (editMode) {
+      // In edit mode, cycle through all states: false -> pending -> true -> false
+      switch (currentStatus) {
+        case 'false':
+          nextStatus = 'pending';
+          break;
+        case 'pending':
+          nextStatus = 'true';
+          break;
+        case 'true':
+          nextStatus = 'false';
+          break;
+      }
+    } else {
+      // In normal mode, allow toggling between false <-> pending
+      if (currentStatus === 'false') {
+        nextStatus = 'pending';
+      } else if (currentStatus === 'pending') {
+        nextStatus = 'false';
+      } else {
+        // Don't allow changing from 'true' in normal mode (only parents can do that)
+        return;
+      }
+    }
+    
     try {
       await axios.put(`/api/todos/${todoId}`, {
         userId,
-        completed: !completed
+        completed: nextStatus
       });
       
       // Update pending money in real-time
-      if (!completed && todo.money > 0) {
-        // Todo is being completed, add to pending
+      if (currentStatus === 'false' && nextStatus === 'pending' && todo.money > 0) {
+        // Todo is being marked as pending, add to pending money
         addToPending(todo.money);
-      } else if (completed && todo.money > 0) {
-        // Todo is being uncompleted, remove from pending
+      } else if (currentStatus === 'pending' && nextStatus === 'false' && todo.money > 0) {
+        // Todo is being unchecked from pending, remove from pending
         removeFromPending(todo.money);
       }
       
@@ -192,6 +356,76 @@ export default function TodoListPage() {
         {error && <p className="text-red-600 mb-4 p-3 bg-red-50 rounded">{error}</p>}
         {resetStatus && <p className="mb-4 p-3 bg-blue-50 rounded text-blue-800">{resetStatus}</p>}
         
+        {/* Countdown Timer */}
+        <div className={`p-4 rounded-lg mb-6 border ${
+          uncompletedCount > 0 
+            ? 'bg-gradient-to-r from-red-50 to-orange-50 border-red-200' 
+            : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h3 className={`text-lg font-semibold mb-1 ${
+                uncompletedCount > 0 ? 'text-red-800' : 'text-blue-800'
+              }`}>
+                🕘 Next Reset
+              </h3>
+              {editMode ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-700">Reset time:</span>
+                    <input
+                      type="time"
+                      value={resetTime}
+                      onChange={(e) => setResetTime(e.target.value)}
+                      className="px-2 py-1 border rounded text-sm"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-700">Penalty amount: $</span>
+                    <input
+                      type="number"
+                      value={penaltyAmount}
+                      onChange={(e) => setPenaltyAmount(Number(e.target.value))}
+                      step="0.1"
+                      min="0"
+                      className="px-2 py-1 border rounded text-sm w-20"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <p className={`text-sm ${
+                    uncompletedCount > 0 ? 'text-red-600' : 'text-blue-600'
+                  }`}>
+                    Daily todos reset at {resetTime}
+                  </p>
+                  {uncompletedCount > 0 && (
+                    <p className="text-sm text-red-600 font-medium mt-1">
+                      ⚠️ You have {uncompletedCount} uncompleted task{uncompletedCount !== 1 ? 's' : ''}, you will lose ${penaltyAmount} after {resetTime}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-2xl font-mono font-bold text-blue-800">
+              <div className="bg-white px-3 py-2 rounded-lg shadow-sm border">
+                {countdown.hours.toString().padStart(2, '0')}
+                <div className="text-xs text-blue-600 font-normal">HRS</div>
+              </div>
+              <div className="text-blue-400">:</div>
+              <div className="bg-white px-3 py-2 rounded-lg shadow-sm border">
+                {countdown.minutes.toString().padStart(2, '0')}
+                <div className="text-xs text-blue-600 font-normal">MIN</div>
+              </div>
+              <div className="text-blue-400">:</div>
+              <div className="bg-white px-3 py-2 rounded-lg shadow-sm border">
+                {countdown.seconds.toString().padStart(2, '0')}
+                <div className="text-xs text-blue-600 font-normal">SEC</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         {/* Reset Controls - Only in Edit Mode */}
         {editMode && (
           <div className="bg-orange-50 p-4 rounded-lg mb-6">
@@ -218,8 +452,46 @@ export default function TodoListPage() {
             </div>
             <p className="text-sm text-orange-700 mt-2">
               ℹ️ This will mark all completed todos of the selected type as incomplete again. 
-              Normally this happens automatically: daily (every 0:00), weekly (Monday 0:00), monthly (1st 0:00).
+              Normally this happens automatically: daily (every 21:10), weekly (Monday 21:10), monthly (1st 21:10).
             </p>
+            <div className="mt-3 pt-3 border-t border-orange-200">
+              <div className="flex flex-wrap gap-3 mb-3">
+                <button
+                  onClick={() => {
+                    console.log('Testing automatic reset check...');
+                    checkAndPerformAutoReset();
+                  }}
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  🧪 Test Auto-Reset Check
+                </button>
+                <button
+                  onClick={async () => {
+                    console.log('Testing auto-approval and reset...');
+                    await performAutoApprovalAndReset('daily');
+                  }}
+                  className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  🚀 Test Auto-Approve & Reset
+                </button>
+                <button
+                  onClick={async () => {
+                    console.log('Testing penalty system...');
+                    const response = await axios.post('/api/todos/apply-penalty', { 
+                      userId,
+                      penaltyAmount: penaltyAmount 
+                    });
+                    console.log('Penalty result:', response.data);
+                  }}
+                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  💸 Test Penalty
+                </button>
+              </div>
+              <p className="text-xs text-orange-600">
+                Click to test automatic logic (check console for logs)
+              </p>
+            </div>
           </div>
         )}
 
@@ -276,7 +548,11 @@ export default function TodoListPage() {
             </div>
           ) : (
             todos.map((todo) => (
-              <div key={todo.todoId} className={`border rounded-lg p-4 transition-all ${todo.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
+              <div key={todo.todoId} className={`border rounded-lg p-4 transition-all ${
+                todo.completed === 'true' ? 'bg-green-50 border-green-200' :
+                todo.completed === 'pending' ? 'bg-yellow-50 border-yellow-200' :
+                'bg-white border-gray-200'
+              }`}>
                 {editMode && editingTodoId === todo.todoId ? (
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <input
@@ -327,17 +603,29 @@ export default function TodoListPage() {
                     <div className="flex items-center gap-3 flex-1">
                       <button
                         onClick={() => handleToggleComplete(todo.todoId, todo.completed)}
+                        disabled={!editMode && todo.completed === 'true'}
                         className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
-                          todo.completed 
-                            ? 'bg-green-500 border-green-500 text-white' 
-                            : 'border-gray-300 hover:border-green-400'
-                        }`}
+                          todo.completed === 'true' ? 'bg-green-500 border-green-500 text-white' :
+                          todo.completed === 'pending' ? 'bg-yellow-500 border-yellow-500 text-white' :
+                          'border-gray-300 hover:border-green-400'
+                        } ${!editMode && todo.completed === 'true' ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+                        title={
+                          todo.completed === 'false' ? 'Click to mark as pending' :
+                          todo.completed === 'pending' ? (editMode ? 'Click to approve' : 'Click to untick') :
+                          editMode ? 'Click to reset' : 'Completed'
+                        }
                       >
-                        {todo.completed && '✓'}
+                        {todo.completed === 'true' && '✓'}
+                        {todo.completed === 'pending' && '⏳'}
                       </button>
                       <div className="flex-1">
-                        <p className={`text-lg ${todo.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                        <p className={`text-lg ${
+                          todo.completed === 'true' ? 'line-through text-gray-500' :
+                          todo.completed === 'pending' ? 'text-yellow-700 font-medium' :
+                          'text-gray-900'
+                        }`}>
                           {todo.text}
+                          {todo.completed === 'pending' && <span className="ml-2 text-xs text-yellow-600">(Pending Approval)</span>}
                         </p>
                         <div className="flex items-center gap-3 mt-1">
                           <div className="flex items-center gap-1">
@@ -346,6 +634,15 @@ export default function TodoListPage() {
                           </div>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRepeatColor(todo.repeat)}`}>
                             {todo.repeat}
+                          </span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            todo.completed === 'true' ? 'bg-green-100 text-green-800' :
+                            todo.completed === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {todo.completed === 'true' ? '✅ Approved' :
+                             todo.completed === 'pending' ? '⏳ Pending' :
+                             '📝 Todo'}
                           </span>
                         </div>
                       </div>

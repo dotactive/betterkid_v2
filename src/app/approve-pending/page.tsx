@@ -64,6 +64,8 @@ export default function ApprovePendingPage() {
   }, [isAuthenticated, editMode, router]);
 
   const handleApprovePending = async (pendingId: string) => {
+    if (!userId) return;
+    
     try {
       console.log('Approving pending money:', pendingId);
       const response = await axios.post(`/api/pending-money/${pendingId}`, {
@@ -89,7 +91,7 @@ export default function ApprovePendingPage() {
   };
 
   const handleApproveAll = async () => {
-    if (pendingMoney.length === 0) return;
+    if (pendingMoney.length === 0 || !userId) return;
     
     try {
       console.log('Approving all pending money');
@@ -117,6 +119,8 @@ export default function ApprovePendingPage() {
   };
 
   const handleDeletePending = async (pendingId: string) => {
+    if (!userId) return;
+    
     try {
       console.log('Deleting pending money:', pendingId);
       await axios.delete(`/api/pending-money/${pendingId}`, {
