@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '@/hooks/useAuth';
 import { useEditMode } from '@/hooks/useEditMode';
@@ -34,13 +34,19 @@ export default function TodoListPage() {
   });
   const [resetStatus, setResetStatus] = useState('');
   const [countdown, setCountdown] = useState({ hours: 0, minutes: 0, seconds: 0 });
-  const [penaltyAmount, setPenaltyAmount] = useState(0.5);
-  const [resetTime, setResetTime] = useState('21:10');
+  const [penaltyAmount, setPenaltyAmount] = useState(0);
+  const [resetTime, setResetTime] = useState('00:00');
   const [uncompletedCount, setUncompletedCount] = useState(0);
+  const [completeAwardEnabled, setCompleteAwardEnabled] = useState(false);
+  const [uncompleteFineEnabled, setUncompleteFineEnabled] = useState(false);
+  const [completeAward, setCompleteAward] = useState(0);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const correctResetTimeRef = useRef<string>('00:00');
 
   useEffect(() => {
     if (isAuthenticated && userId) {
       fetchTodos();
+      fetchUserSettings();
       checkAndPerformAutoReset();
     }
     // Initialize countdown timer immediately
@@ -66,6 +72,11 @@ export default function TodoListPage() {
     };
   }, [isAuthenticated, userId]);
 
+  // Update countdown when resetTime changes or initially when component mounts
+  useEffect(() => {
+    updateCountdown();
+  }, [resetTime]);
+
   const fetchTodos = async () => {
     if (!userId) return;
     try {
@@ -81,6 +92,79 @@ export default function TodoListPage() {
     } catch (err: any) {
       console.error('Failed to fetch todos:', err);
       setError(err.response?.data?.error || 'Failed to fetch todos');
+    }
+  };
+
+  const fetchUserSettings = async () => {
+    if (!userId) return;
+    console.log('fetchUserSettings called for userId:', userId);
+    try {
+      const response = await axios.get(`/api/users/${encodeURIComponent(userId)}/settings`);
+      const settings = response.data;
+      console.log('settings response:', settings);
+      
+      // Update all settings from database
+      const newResetTime = settings.resetTime || '00:00';
+      console.log('newResetTime calculated:', newResetTime, 'from settings.resetTime:', settings.resetTime);
+      
+      // Store the correct resetTime in ref to prevent it from being lost
+      if (settings.resetTime) {
+        correctResetTimeRef.current = settings.resetTime;
+        setResetTime(newResetTime);
+      } else {
+        console.log('No resetTime in settings, keeping existing values');
+      }
+      setPenaltyAmount(settings.uncompleteFine !== undefined ? settings.uncompleteFine : 0);
+      setCompleteAward(settings.completeAward !== undefined ? settings.completeAward : 0);
+      setCompleteAwardEnabled(settings.completeAwardEnabled || false);
+      setUncompleteFineEnabled(settings.uncompleteFineEnabled || false);
+      console.log('resetTime from database: ' + newResetTime);
+      console.log('current resetTime state (old): ' + resetTime);
+      setSettingsLoaded(true);
+      // Trigger countdown update with the correct reset time
+      const timeToUse = settings.resetTime || resetTime || '00:00';
+      console.log('Calling updateCountdown with:', timeToUse);
+      updateCountdown(timeToUse);
+    } catch (err: any) {
+      console.error('Failed to fetch user settings:', err);
+      setSettingsLoaded(true); // Still mark as loaded even if failed
+      // Don't set error state here since this is not critical
+    }
+  };
+
+  const handleResetTimeChange = async (newResetTime: string) => {
+    correctResetTimeRef.current = newResetTime;
+    setResetTime(newResetTime);
+    
+    // Update countdown immediately with new reset time
+    updateCountdown(newResetTime);
+    
+    // Update in database
+    if (userId) {
+      try {
+        await axios.put(`/api/users/${encodeURIComponent(userId)}/settings`, {
+          resetTime: newResetTime
+        });
+      } catch (err: any) {
+        console.error('Failed to update reset time:', err);
+        setError('Failed to save reset time');
+      }
+    }
+  };
+
+  const handlePenaltyAmountChange = async (newPenaltyAmount: number) => {
+    setPenaltyAmount(newPenaltyAmount);
+    
+    // Update in database
+    if (userId) {
+      try {
+        await axios.put(`/api/users/${encodeURIComponent(userId)}/settings`, {
+          uncompleteFine: newPenaltyAmount
+        });
+      } catch (err: any) {
+        console.error('Failed to update penalty amount:', err);
+        setError('Failed to save penalty amount');
+      }
     }
   };
 
@@ -157,11 +241,22 @@ export default function TodoListPage() {
     }
   };
 
-  const updateCountdown = () => {
+  const updateCountdown = (timeToUse?: string) => {
     const now = new Date();
     
+    // Always prefer the ref value if it's been set, then timeToUse, then state
+    let currentResetTime = timeToUse;
+    if (!currentResetTime) {
+      currentResetTime = correctResetTimeRef.current !== '00:00' ? correctResetTimeRef.current : resetTime;
+    }
+    
+    console.log('updateCountdown using time: ' + currentResetTime + 
+      (timeToUse ? ' (provided)' : 
+       correctResetTimeRef.current !== '00:00' ? ' (from ref: ' + correctResetTimeRef.current + ')' : 
+       ' (from state)'));
+    
     // Parse reset time (e.g., "21:10" -> hour: 21, minute: 10)
-    const [hour, minute] = resetTime.split(':').map(Number);
+    const [hour, minute] = currentResetTime.split(':').map(Number);
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0);
     
     let nextResetTime: Date;
@@ -376,7 +471,7 @@ export default function TodoListPage() {
                     <input
                       type="time"
                       value={resetTime}
-                      onChange={(e) => setResetTime(e.target.value)}
+                      onChange={(e) => handleResetTimeChange(e.target.value)}
                       className="px-2 py-1 border rounded text-sm"
                     />
                   </div>
@@ -385,7 +480,7 @@ export default function TodoListPage() {
                     <input
                       type="number"
                       value={penaltyAmount}
-                      onChange={(e) => setPenaltyAmount(Number(e.target.value))}
+                      onChange={(e) => handlePenaltyAmountChange(Number(e.target.value))}
                       step="0.1"
                       min="0"
                       className="px-2 py-1 border rounded text-sm w-20"
@@ -399,7 +494,14 @@ export default function TodoListPage() {
                   }`}>
                     Daily todos reset at {resetTime}
                   </p>
-                  {uncompletedCount > 0 && (
+                  {/* Show earn message if completeAwardEnabled is true */}
+                  {completeAwardEnabled && (
+                    <p className="text-sm text-green-600 font-medium mt-1">
+                      💰 You will earn ${completeAward} for each completed task after {resetTime}
+                    </p>
+                  )}
+                  {/* Show lose message if uncompleteFineEnabled is true and there are uncompleted tasks */}
+                  {uncompleteFineEnabled && uncompletedCount > 0 && (
                     <p className="text-sm text-red-600 font-medium mt-1">
                       ⚠️ You have {uncompletedCount} uncompleted task{uncompletedCount !== 1 ? 's' : ''}, you will lose ${penaltyAmount} after {resetTime}
                     </p>
