@@ -26,14 +26,17 @@
 } */
 
 body {
-  background: var(--background);
+  
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+.main-bg{background: var(--background);}
 .btn-1{  color: #fff;  background-color: var(--better-colour-1);border:solid 2px #fff;}
 .btn-1:hover{background-color: #fff; color:var(--better-colour-1); border:solid 2px var(--better-colour-1);}
 .btn-2{  color: #fff;  background-color: var(--better-colour-2);border:solid 2px #fff;}
 .btn-2:hover{background-color: #fff; color:var(--better-colour-2); border:solid 2px var(--better-colour-2);}
+.btn-3{  color: #fff;  background-color: var(--better-colour-3);border:solid 2px #fff;}
+.btn-3:hover{background-color: #fff; color:var(--better-colour-3); border:solid 2px var(--better-colour-3);}
 
 .text-colour-1{color:var(--better-colour-1); }
 .text-colour-2{color:var(--better-colour-2); }

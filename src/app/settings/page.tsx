@@ -7,11 +7,9 @@ interface UserSettings {
   username: string;
   password: string;
   parentCode: string;
-  resetTime: string;
   completeAward: number;
   uncompleteFine: number;
-  completeAwardEnabled: boolean;
-  uncompleteFineEnabled: boolean;
+  autoReset: boolean;
 }
 
 export default function SettingsPage() {
@@ -20,21 +18,17 @@ export default function SettingsPage() {
     username: '',
     password: '',
     parentCode: '',
-    resetTime: '21:10',
     completeAward: 1.0,
     uncompleteFine: 0.5,
-    completeAwardEnabled: false,
-    uncompleteFineEnabled: false,
+    autoReset: false,
   });
   const [originalSettings, setOriginalSettings] = useState<UserSettings>({
     username: '',
     password: '',
     parentCode: '',
-    resetTime: '21:10',
     completeAward: 1.0,
     uncompleteFine: 0.5,
-    completeAwardEnabled: false,
-    uncompleteFineEnabled: false,
+    autoReset: false,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -58,11 +52,9 @@ export default function SettingsPage() {
         username: userSettings.username || '',
         password: '', // Never pre-fill password for security
         parentCode: userSettings.parentCode || '',
-        resetTime: userSettings.resetTime || '21:10',
         completeAward: userSettings.completeAward || 1.0,
         uncompleteFine: userSettings.uncompleteFine || 0.5,
-        completeAwardEnabled: userSettings.completeAwardEnabled || false,
-        uncompleteFineEnabled: userSettings.uncompleteFineEnabled || false,
+        autoReset: userSettings.autoReset || false,
       };
       
       setSettings(settingsData);
@@ -220,33 +212,17 @@ export default function SettingsPage() {
             
             <div className="space-y-4">
               <div>
-                <label htmlFor="resetTime" className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Daily Reset Time
                 </label>
-                <input
-                  id="resetTime"
-                  type="time"
-                  value={settings.resetTime}
-                  onChange={(e) => handleInputChange('resetTime', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">When daily todos reset each day</p>
+                <div className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-600">
+                  10:00 PM (22:00)
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Daily todos reset at 10:00 PM for all users</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <div className="flex items-center mb-3">
-                    <input
-                      id="completeAwardEnabled"
-                      type="checkbox"
-                      checked={settings.completeAwardEnabled}
-                      onChange={(e) => handleInputChange('completeAwardEnabled', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 mr-2"
-                    />
-                    <label htmlFor="completeAwardEnabled" className="text-sm font-medium text-gray-700">
-                      Enable Complete Award
-                    </label>
-                  </div>
                   <label htmlFor="completeAward" className="block text-sm font-medium text-gray-700 mb-1">
                     Complete Award ($)
                   </label>
@@ -257,27 +233,12 @@ export default function SettingsPage() {
                     min="0"
                     value={settings.completeAward}
                     onChange={(e) => handleInputChange('completeAward', parseFloat(e.target.value) || 0)}
-                    disabled={!settings.completeAwardEnabled}
-                    className={`w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      !settings.completeAwardEnabled ? 'bg-gray-100 text-gray-500' : ''
-                    }`}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Default reward for completing todos</p>
+                  <p className="text-xs text-gray-500 mt-1">Reward for completing todos (set to 0 to disable)</p>
                 </div>
 
                 <div>
-                  <div className="flex items-center mb-3">
-                    <input
-                      id="uncompleteFineEnabled"
-                      type="checkbox"
-                      checked={settings.uncompleteFineEnabled}
-                      onChange={(e) => handleInputChange('uncompleteFineEnabled', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 mr-2"
-                    />
-                    <label htmlFor="uncompleteFineEnabled" className="text-sm font-medium text-gray-700">
-                      Enable Incomplete Fine
-                    </label>
-                  </div>
                   <label htmlFor="uncompleteFine" className="block text-sm font-medium text-gray-700 mb-1">
                     Incomplete Fine ($)
                   </label>
@@ -288,13 +249,29 @@ export default function SettingsPage() {
                     min="0"
                     value={settings.uncompleteFine}
                     onChange={(e) => handleInputChange('uncompleteFine', parseFloat(e.target.value) || 0)}
-                    disabled={!settings.uncompleteFineEnabled}
-                    className={`w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      !settings.uncompleteFineEnabled ? 'bg-gray-100 text-gray-500' : ''
-                    }`}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Penalty for each uncompleted daily todo</p>
+                  <p className="text-xs text-gray-500 mt-1">Penalty for each uncompleted daily todo (set to 0 to disable)</p>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Auto Reset
+                </label>
+                <div className="flex items-center gap-3">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.autoReset}
+                      onChange={(e) => handleInputChange('autoReset', e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                  <span className="text-sm text-gray-700">{settings.autoReset ? 'Enabled' : 'Disabled'}</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">When enabled, daily reset will automatically run at 10:00 PM to approve pending activities and reset daily todos</p>
               </div>
             </div>
           </div>

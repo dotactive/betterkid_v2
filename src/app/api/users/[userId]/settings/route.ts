@@ -35,11 +35,10 @@ export async function GET(request: Request, context: { params: Promise<{ userId:
       username: user.username,
       email: user.email,
       parentCode: user.parentCode || '',
-      resetTime: user.resetTime || '21:10',
+      resetTime: '22:00', // Fixed reset time at 10:00 PM for all users
       completeAward: user.completeAward || 1.0,
       uncompleteFine: user.uncompleteFine || 0.5,
-      completeAwardEnabled: user.completeAwardEnabled || false,
-      uncompleteFineEnabled: user.uncompleteFineEnabled || false,
+      autoReset: user.autoReset || false,
     };
 
     return NextResponse.json(settings);
@@ -61,7 +60,7 @@ export async function PUT(request: Request, context: { params: Promise<{ userId:
     }
 
     const body = await request.json();
-    const { username, password, parentCode, resetTime, completeAward, uncompleteFine, completeAwardEnabled, uncompleteFineEnabled } = body;
+    const { username, password, parentCode, completeAward, uncompleteFine, autoReset } = body;
 
     console.log('PUT /api/users/[userId]/settings, userId:', userId, 'body:', body);
 
@@ -100,9 +99,8 @@ export async function PUT(request: Request, context: { params: Promise<{ userId:
       updatedUser.parentCode = parentCode.trim();
     }
 
-    if (resetTime !== undefined && resetTime.trim() !== '') {
-      updatedUser.resetTime = resetTime.trim();
-    }
+    // Reset time is now fixed at 22:00 for all users
+    updatedUser.resetTime = '22:00';
 
     if (completeAward !== undefined && typeof completeAward === 'number') {
       updatedUser.completeAward = Math.max(0, completeAward);
@@ -112,12 +110,8 @@ export async function PUT(request: Request, context: { params: Promise<{ userId:
       updatedUser.uncompleteFine = Math.max(0, uncompleteFine);
     }
 
-    if (completeAwardEnabled !== undefined && typeof completeAwardEnabled === 'boolean') {
-      updatedUser.completeAwardEnabled = completeAwardEnabled;
-    }
-
-    if (uncompleteFineEnabled !== undefined && typeof uncompleteFineEnabled === 'boolean') {
-      updatedUser.uncompleteFineEnabled = uncompleteFineEnabled;
+    if (autoReset !== undefined && typeof autoReset === 'boolean') {
+      updatedUser.autoReset = autoReset;
     }
 
     // Update user in database
@@ -135,11 +129,10 @@ export async function PUT(request: Request, context: { params: Promise<{ userId:
       username: updatedUser.username,
       email: updatedUser.email,
       parentCode: updatedUser.parentCode || '',
-      resetTime: updatedUser.resetTime || '21:10',
+      resetTime: '22:00', // Fixed reset time at 10:00 PM for all users
       completeAward: updatedUser.completeAward || 1.0,
       uncompleteFine: updatedUser.uncompleteFine || 0.5,
-      completeAwardEnabled: updatedUser.completeAwardEnabled || false,
-      uncompleteFineEnabled: updatedUser.uncompleteFineEnabled || false,
+      autoReset: updatedUser.autoReset || false,
     };
 
     return NextResponse.json({ 

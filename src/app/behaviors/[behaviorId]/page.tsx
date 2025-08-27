@@ -29,6 +29,8 @@ interface Activity {
   positive: boolean;
   top?: boolean;
   pending_quantity: number;
+  completed?: 'false' | 'pending' | 'true';
+  repeat?: 'none' | 'daily' | 'weekly' | 'monthly' | 'once';
 }
 
 interface Behavior {
@@ -51,14 +53,18 @@ export default function BehaviorDetailPage() {
     name: '',
     money: 0,
     positive: true,
-    top: false
+    top: false,
+    completed: 'false' as 'false' | 'pending' | 'true',
+    repeat: 'none' as 'none' | 'daily' | 'weekly' | 'monthly' | 'once'
   });
   const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
   const [editingActivity, setEditingActivity] = useState({
     name: '',
     money: 0,
     positive: true,
-    top: false
+    top: false,
+    completed: 'false' as 'false' | 'pending' | 'true',
+    repeat: 'none' as 'none' | 'daily' | 'weekly' | 'monthly' | 'once'
   });
   const [showBannerPicker, setShowBannerPicker] = useState(false);
   const [editingBannerImage, setEditingBannerImage] = useState<string | null>(null);
@@ -115,8 +121,10 @@ export default function BehaviorDetailPage() {
         money: newActivity.money,
         positive: newActivity.positive,
         top: newActivity.top,
+        completed: newActivity.completed,
+        repeat: newActivity.repeat,
       });
-      setNewActivity({ name: '', money: 0, positive: true, top: false });
+      setNewActivity({ name: '', money: 0, positive: true, top: false, completed: 'false', repeat: 'none' });
       setShowAddActivity(false);
       fetchActivities();
     } catch (err: any) {
@@ -143,7 +151,9 @@ export default function BehaviorDetailPage() {
       name: activity.activityName,
       money: activity.money,
       positive: activity.positive,
-      top: activity.top || false
+      top: activity.top || false,
+      completed: activity.completed || 'false',
+      repeat: activity.repeat || 'none'
     });
   };
 
@@ -153,15 +163,25 @@ export default function BehaviorDetailPage() {
       return;
     }
     
+    // Find the current activity to preserve its pending_quantity
+    const currentActivity = activities.find(a => a.activityId === activityId);
+    if (!currentActivity) {
+      setError('Activity not found');
+      return;
+    }
+    
     try {
       await axios.put(`/api/activities/${activityId}`, {
         activityName: editingActivity.name.trim(),
         money: editingActivity.money,
         positive: editingActivity.positive,
         top: editingActivity.top,
+        completed: editingActivity.completed,
+        repeat: editingActivity.repeat,
+        pending_quantity: currentActivity.pending_quantity, // Preserve existing pending_quantity
       });
       setEditingActivityId(null);
-      setEditingActivity({ name: '', money: 0, positive: true, top: false });
+      setEditingActivity({ name: '', money: 0, positive: true, top: false, completed: 'false', repeat: 'none' });
       fetchActivities();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to update activity');
@@ -170,7 +190,7 @@ export default function BehaviorDetailPage() {
 
   const handleCancelEditActivity = () => {
     setEditingActivityId(null);
-    setEditingActivity({ name: '', money: 0, positive: true, top: false });
+    setEditingActivity({ name: '', money: 0, positive: true, top: false, completed: 'false', repeat: 'none' });
   };
 
   const handlePendingQuantityChange = async (activityId: string, delta: number) => {
@@ -180,14 +200,19 @@ export default function BehaviorDetailPage() {
     const newPendingQuantity = Math.max(0, activity.pending_quantity + delta);
     const pendingAmountChange = delta * activity.money * (activity.positive ? 1 : -1);
     
+    // Set completed status based on pending quantity
+    const newCompletedStatus = newPendingQuantity > 0 ? 'pending' : 'false';
+    
     try {
-      // Update the activity's pending quantity
+      // Update the activity's pending quantity and completed status
       await axios.put(`/api/activities/${activityId}`, {
         activityName: activity.activityName,
         money: activity.money,
         positive: activity.positive,
         top: activity.top || false,
         pending_quantity: newPendingQuantity,
+        completed: newCompletedStatus,
+        repeat: activity.repeat,
       });
       
       // Always sync pending money record with current pending quantity
@@ -381,6 +406,28 @@ export default function BehaviorDetailPage() {
                 Pin to top (show first in list)
               </label>
             </div>
+            <div className="flex gap-3">
+              <select
+                value={newActivity.completed}
+                onChange={(e) => setNewActivity({ ...newActivity, completed: e.target.value as 'false' | 'pending' | 'true' })}
+                className="flex-1 p-2 border rounded"
+              >
+                <option value="false">Not Started</option>
+                <option value="pending">Pending Approval</option>
+                <option value="true">Completed</option>
+              </select>
+              <select
+                value={newActivity.repeat}
+                onChange={(e) => setNewActivity({ ...newActivity, repeat: e.target.value as 'none' | 'daily' | 'weekly' | 'monthly' | 'once' })}
+                className="flex-1 p-2 border rounded"
+              >
+                <option value="none">None</option>
+                <option value="once">Once</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
             <button
               onClick={handleAddActivity}
               className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
@@ -458,6 +505,28 @@ export default function BehaviorDetailPage() {
                             <label htmlFor={`edit-activity-top-${activity.activityId}`} className="text-sm text-gray-700">
                               Pin to top
                             </label>
+                          </div>
+                          <div className="flex gap-3">
+                            <select
+                              value={editingActivity.completed}
+                              onChange={(e) => setEditingActivity({ ...editingActivity, completed: e.target.value as 'false' | 'pending' | 'true' })}
+                              className="flex-1 p-3 border border-gray-300 rounded-xl text-gray-900 focus:border-green-400"
+                            >
+                              <option value="false">Not Started</option>
+                              <option value="pending">Pending Approval</option>
+                              <option value="true">Completed</option>
+                            </select>
+                            <select
+                              value={editingActivity.repeat}
+                              onChange={(e) => setEditingActivity({ ...editingActivity, repeat: e.target.value as 'none' | 'daily' | 'weekly' | 'monthly' | 'once' })}
+                              className="flex-1 p-3 border border-gray-300 rounded-xl text-gray-900 focus:border-green-400"
+                            >
+                              <option value="none">None</option>
+                              <option value="once">Once</option>
+                              <option value="daily">Daily</option>
+                              <option value="weekly">Weekly</option>
+                              <option value="monthly">Monthly</option>
+                            </select>
                           </div>
                           <div className="flex gap-2 pt-2">
                             <button
@@ -617,6 +686,28 @@ export default function BehaviorDetailPage() {
                             <label htmlFor={`edit-activity-top-neg-${activity.activityId}`} className="text-sm text-gray-700">
                               Pin to top
                             </label>
+                          </div>
+                          <div className="flex gap-3">
+                            <select
+                              value={editingActivity.completed}
+                              onChange={(e) => setEditingActivity({ ...editingActivity, completed: e.target.value as 'false' | 'pending' | 'true' })}
+                              className="flex-1 p-3 border border-gray-300 rounded-xl text-gray-900 focus:border-red-400"
+                            >
+                              <option value="false">Not Started</option>
+                              <option value="pending">Pending Approval</option>
+                              <option value="true">Completed</option>
+                            </select>
+                            <select
+                              value={editingActivity.repeat}
+                              onChange={(e) => setEditingActivity({ ...editingActivity, repeat: e.target.value as 'none' | 'daily' | 'weekly' | 'monthly' | 'once' })}
+                              className="flex-1 p-3 border border-gray-300 rounded-xl text-gray-900 focus:border-red-400"
+                            >
+                              <option value="none">None</option>
+                              <option value="once">Once</option>
+                              <option value="daily">Daily</option>
+                              <option value="weekly">Weekly</option>
+                              <option value="monthly">Monthly</option>
+                            </select>
                           </div>
                           <div className="flex gap-2 pt-2">
                             <button

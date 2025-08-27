@@ -10,6 +10,8 @@ interface Activity {
   positive: boolean;
   top?: boolean;
   pending_quantity?: number;
+  completed?: 'false' | 'pending' | 'true';
+  repeat?: 'none' | 'daily' | 'weekly' | 'monthly' | 'once';
 }
 
 export async function GET(request: Request) {
@@ -39,6 +41,8 @@ export async function GET(request: Request) {
       positive: item.positive,
       top: item.top || false,
       pending_quantity: item.pending_quantity || 0,
+      completed: item.completed || 'false',
+      repeat: item.repeat || 'none',
     })) || [];
 
     return NextResponse.json(activities);
@@ -55,7 +59,15 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { behaviorId, activityName, money, positive, top }: { behaviorId: string; activityName: string; money: number; positive: boolean; top?: boolean } = body;
+    const { behaviorId, activityName, money, positive, top, completed = 'false', repeat = 'none' }: { 
+      behaviorId: string; 
+      activityName: string; 
+      money: number; 
+      positive: boolean; 
+      top?: boolean;
+      completed?: 'false' | 'pending' | 'true';
+      repeat?: 'none' | 'daily' | 'weekly' | 'monthly' | 'once';
+    } = body;
     console.log('Attempting to create activity:', { behaviorId, activityName, money, positive });
 
     if (!behaviorId || !activityName || typeof activityName !== 'string' || typeof money !== 'number' || typeof positive !== 'boolean') {
@@ -93,6 +105,8 @@ export async function POST(request: Request) {
         positive,
         top: top || false,
         pending_quantity: 0,
+        completed,
+        repeat,
       },
       ConditionExpression: 'attribute_not_exists(partitionKey) AND attribute_not_exists(sortKey)',
     };

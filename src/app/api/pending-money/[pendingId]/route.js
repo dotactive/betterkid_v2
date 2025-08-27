@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { DeleteCommand, QueryCommand, PutCommand, ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import dynamoDb from '@/lib/aws-config';
 
-// Helper function to reset activity pending quantity
+// Helper function to handle activity denial - just reset to false
 async function resetActivityPendingQuantity(activityId) {
   try {
     // Find the activity by activityId
@@ -18,16 +18,17 @@ async function resetActivityPendingQuantity(activityId) {
     const activity = scanResult.Items?.[0];
 
     if (activity) {
-      // Update the activity's pending_quantity to 0
+      // Reset pending_quantity to 0 and completed to 'false'
       const updateParams = {
         TableName: 'betterkid_v2',
         Key: {
           partitionKey: activity.partitionKey,
           sortKey: activity.sortKey,
         },
-        UpdateExpression: 'SET pending_quantity = :pending_quantity',
+        UpdateExpression: 'SET pending_quantity = :pending_quantity, completed = :completed',
         ExpressionAttributeValues: {
           ':pending_quantity': 0,
+          ':completed': 'false',
         },
         ConditionExpression: 'attribute_exists(partitionKey)',
       };
@@ -37,6 +38,81 @@ async function resetActivityPendingQuantity(activityId) {
     }
   } catch (error) {
     console.error(`Failed to reset pending_quantity for activity ${activityId}:`, error);
+    // Don't throw - continue with the main operation even if this fails
+  }
+}
+
+// Helper function to handle activity approval based on repeat type
+async function handleActivityApproval(activityId) {
+  try {
+    // Find the activity by activityId
+    const scanParams = {
+      TableName: 'betterkid_v2',
+      FilterExpression: 'activityId = :activityId',
+      ExpressionAttributeValues: {
+        ':activityId': activityId,
+      },
+    };
+
+    const scanResult = await dynamoDb.send(new ScanCommand(scanParams));
+    const activity = scanResult.Items?.[0];
+
+    if (activity) {
+      const repeatType = activity.repeat || 'none';
+
+      if (repeatType === 'once') {
+        // Delete the activity if repeat is 'once'
+        const deleteParams = {
+          TableName: 'betterkid_v2',
+          Key: {
+            partitionKey: activity.partitionKey,
+            sortKey: activity.sortKey,
+          },
+          ConditionExpression: 'attribute_exists(partitionKey)',
+        };
+
+        await dynamoDb.send(new DeleteCommand(deleteParams));
+        console.log(`Deleted 'once' activity: ${activity.activityName}`);
+      } else if (['daily', 'weekly', 'monthly'].includes(repeatType)) {
+        // Update repeating activity: reset pending_quantity and set completed to 'true'
+        const updateParams = {
+          TableName: 'betterkid_v2',
+          Key: {
+            partitionKey: activity.partitionKey,
+            sortKey: activity.sortKey,
+          },
+          UpdateExpression: 'SET pending_quantity = :pending_quantity, completed = :completed',
+          ExpressionAttributeValues: {
+            ':pending_quantity': 0,
+            ':completed': 'true',
+          },
+          ConditionExpression: 'attribute_exists(partitionKey)',
+        };
+
+        await dynamoDb.send(new UpdateCommand(updateParams));
+        console.log(`Approved repeating activity: ${activity.activityName} (${repeatType})`);
+      } else {
+        // For 'none' or other types, just reset pending_quantity
+        const updateParams = {
+          TableName: 'betterkid_v2',
+          Key: {
+            partitionKey: activity.partitionKey,
+            sortKey: activity.sortKey,
+          },
+          UpdateExpression: 'SET pending_quantity = :pending_quantity, completed = :completed',
+          ExpressionAttributeValues: {
+            ':pending_quantity': 0,
+            ':completed': 'false',
+          },
+          ConditionExpression: 'attribute_exists(partitionKey)',
+        };
+
+        await dynamoDb.send(new UpdateCommand(updateParams));
+        console.log(`Reset activity: ${activity.activityName} (${repeatType})`);
+      }
+    }
+  } catch (error) {
+    console.error(`Failed to handle activity approval for ${activityId}:`, error);
     // Don't throw - continue with the main operation even if this fails
   }
 }
@@ -124,7 +200,7 @@ export async function POST(request, context) {
         
         // If this is an activity item, reset the pending quantity and log it
         if (item.type === 'activity' && item.referenceId) {
-          await resetActivityPendingQuantity(item.referenceId);
+          await handleActivityApproval(item.referenceId);
           
           // Add to balance log
           const logId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -315,7 +391,7 @@ export async function POST(request, context) {
       
       // If this is an activity item, reset the pending quantity and log it
       if (pending.type === 'activity' && pending.referenceId) {
-        await resetActivityPendingQuantity(pending.referenceId);
+        await handleActivityApproval(pending.referenceId);
         
         // Add to balance log
         const logId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;

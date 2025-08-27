@@ -242,8 +242,17 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   }
  
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="bg-blue-500 text-white ">
+    <div className={`min-h-screen flex flex-col  ${
+      editMode 
+        ? 'bg-white' 
+        : 'main-bg'
+    }`}>
+      <header className={`text-white ${
+                  editMode 
+                    ? 'bg-gray-800' 
+                    : 'bg-blue-500'
+                }`}
+                >
         {/* Top section with logo and controls */}
         <div className=" py-4 flex flex-col md:flex-row justify-between items-center max-w-4xl mx-auto">
           <div className="text-center md:text-left">
@@ -256,15 +265,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
               <button
                 onClick={handleEditModeToggle}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer ${
-                  editMode 
-                    ? 'bg-red-500 hover:bg-red-600 text-white' 
-                    : 'btn-1'
-                }`}
+                className="px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer  btn-1"
               >
                 {editMode ? 'Exit Edit Mode' : 'Edit Mode'}
               </button>
-  
+              {editMode  &&
+              <Link href="/settings" className="btn-3 px-4 py-2 rounded-lg font-medium transition-colors  cursor-pointer">Settings</Link>
+                }
             <button 
               onClick={handleLogout} 
               className="btn-2 px-4 py-2 rounded-lg font-medium transition-colors  cursor-pointer"
@@ -291,9 +298,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 <Link href="/logs" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
                   Logs
                 </Link>
-                <Link href="/settings" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
-                  ⚙️ Settings
-                </Link>
+
 
 
     
@@ -374,7 +379,11 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         {children}
         </div>
       </main>
-            <footer className="bg-blue-500 text-white mt-5" >
+            <footer  className={`text-white  mt-5 ${
+                  editMode 
+                    ? 'bg-gray-800' 
+                    : 'bg-blue-500'
+                }`}>
             <div className="py-4 flex flex-col md:flex-row justify-between items-center max-w-4xl mx-auto mx-auto">
           <div className="text-center md:text-left">
           © 2025 BetterKid 
