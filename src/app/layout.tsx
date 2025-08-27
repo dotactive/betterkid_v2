@@ -319,16 +319,19 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               <div className="px-6 py-4 border-t  ">
           <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 bg-white rounded-lg  p-4 border-2 border-dashed border-colour-1">
             <div className="text-center md:text-left  ">
-              <h2 className="text-2xl font-bold">
-                Welcome, <span className="text-colour-2">{username || userId}</span>{editMode ? ' \'s parent!' : ' !'}
-              </h2>
-              <div className="text-sm mt-1">
-                {editMode ? (
-                  <p>Manage your child's progress</p>
+             
+
+              {editMode ? (
+                 <h2 className="text-2xl font-bold"> Welcome, <span className="text-colour-2">{username}</span></h2>
                 ) : (
-                  <BreadcrumbComponent pathname={pathname} />
+                  <h2 className="text-2xl font-bold">Edit Mode</h2>
                 
                 )}
+
+              
+              
+              <div className="text-sm mt-1">
+              <BreadcrumbComponent pathname={pathname} />
               </div>
             </div>
       <div className="flex flex-col md:flex-row gap-2">
