@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import axios from 'axios';
 import { useAuth } from '@/hooks/useAuth';
 import { useEditMode } from '@/hooks/useEditMode';
+import { usePendingMoney } from '@/hooks/usePendingMoney';
 import ImagePicker from '@/components/ImagePicker';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -27,6 +28,7 @@ interface Activity {
   money: number;
   positive: boolean;
   top?: boolean;
+  pending_quantity: number;
 }
 
 interface Behavior {
@@ -39,6 +41,7 @@ interface Behavior {
 export default function BehaviorDetailPage() {
   const { isAuthenticated, userId } = useAuth();
   const { editMode } = useEditMode();
+  const { refreshPendingMoney } = usePendingMoney();
   const { behaviorId } = useParams() as { behaviorId: string };
   const [behavior, setBehavior] = useState<Behavior | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -168,6 +171,79 @@ export default function BehaviorDetailPage() {
   const handleCancelEditActivity = () => {
     setEditingActivityId(null);
     setEditingActivity({ name: '', money: 0, positive: true, top: false });
+  };
+
+  const handlePendingQuantityChange = async (activityId: string, delta: number) => {
+    const activity = activities.find(a => a.activityId === activityId);
+    if (!activity || !userId) return;
+
+    const newPendingQuantity = Math.max(0, activity.pending_quantity + delta);
+    const pendingAmountChange = delta * activity.money * (activity.positive ? 1 : -1);
+    
+    try {
+      // Update the activity's pending quantity
+      await axios.put(`/api/activities/${activityId}`, {
+        activityName: activity.activityName,
+        money: activity.money,
+        positive: activity.positive,
+        top: activity.top || false,
+        pending_quantity: newPendingQuantity,
+      });
+      
+      // Always sync pending money record with current pending quantity
+      try {
+        // Get existing pending money record for this activity
+        const existingPendingResponse = await axios.get(`/api/pending-money?userId=${encodeURIComponent(userId)}`);
+        const existingPending = existingPendingResponse.data.find(
+          (p: any) => p.type === 'activity' && p.referenceId === activityId
+        );
+
+        if (newPendingQuantity > 0) {
+          // Calculate total amount and reason based on current pending quantity
+          const totalPendingAmount = newPendingQuantity * activity.money * (activity.positive ? 1 : -1);
+          const newReason = `${activity.positive ? 'Completed' : 'Did'} "${activity.activityName}" (${newPendingQuantity} time${newPendingQuantity !== 1 ? 's' : ''})`;
+
+          if (existingPending) {
+            // Update existing pending money record
+            await axios.put(`/api/pending-money?pendingId=${existingPending.pendingId}`, {
+              amount: totalPendingAmount,
+              reason: newReason,
+            });
+          } else {
+            // Create new pending money record
+            await axios.post('/api/pending-money', {
+              userId,
+              amount: totalPendingAmount,
+              reason: newReason,
+              type: 'activity',
+              referenceId: activityId,
+            });
+          }
+        } else {
+          // If pending quantity is 0, delete existing pending money record
+          if (existingPending) {
+            await axios.delete(`/api/pending-money/${existingPending.pendingId}`, {
+              headers: { 'x-userid': userId }
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error managing pending money:', err);
+        setError('Failed to update pending rewards');
+      }
+      
+      // Update local state
+      setActivities(prev => prev.map(a => 
+        a.activityId === activityId 
+          ? { ...a, pending_quantity: newPendingQuantity }
+          : a
+      ));
+      
+      // Refresh global pending money state
+      await refreshPendingMoney();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to update pending quantity');
+    }
   };
 
   const handleBannerClick = () => {
@@ -416,27 +492,57 @@ export default function BehaviorDetailPage() {
                                 <FontAwesomeIcon icon={faCoins} className="mr-1  text-colour-1" />
                            
                               </div>
+                              {activity.pending_quantity > 0 && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Pending: {activity.pending_quantity} × ${activity.money.toFixed(2)} = ${(activity.pending_quantity * activity.money).toFixed(2)}
+                                </div>
+                              )}
                             </div>
                           </div>
                           
-                          {editMode && (
-                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={() => handleEditActivity(activity)}
-                                className="bg-amber-500 hover:bg-amber-600 text-white p-2 rounded-lg shadow-sm transition-colors"
-                                title="Edit activity"
-                              >
-                                <FontAwesomeIcon icon={faEdit} className="text-sm" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteActivity(activity.activityId)}
-                                className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg shadow-sm transition-colors"
-                                title="Delete activity"
-                              >
-                                <FontAwesomeIcon icon={faTrash} className="text-sm" />
-                              </button>
-                            </div>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {!editMode && (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => handlePendingQuantityChange(activity.activityId, -1)}
+                                  disabled={activity.pending_quantity === 0}
+                                  className="bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                                  title="Decrease pending"
+                                >
+                                  <FontAwesomeIcon icon={faMinus} className="text-xs" />
+                                </button>
+                                <span className="text-sm font-medium min-w-[2rem] text-center">
+                                  {activity.pending_quantity}
+                                </span>
+                                <button
+                                  onClick={() => handlePendingQuantityChange(activity.activityId, 1)}
+                                  className="bg-green-500 hover:bg-green-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                                  title="Increase pending"
+                                >
+                                  <FontAwesomeIcon icon={faPlus} className="text-xs" />
+                                </button>
+                              </div>
+                            )}
+                            
+                            {editMode && (
+                              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => handleEditActivity(activity)}
+                                  className="bg-amber-500 hover:bg-amber-600 text-white p-2 rounded-lg shadow-sm transition-colors"
+                                  title="Edit activity"
+                                >
+                                  <FontAwesomeIcon icon={faEdit} className="text-sm" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteActivity(activity.activityId)}
+                                  className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg shadow-sm transition-colors"
+                                  title="Delete activity"
+                                >
+                                  <FontAwesomeIcon icon={faTrash} className="text-sm" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -541,27 +647,57 @@ export default function BehaviorDetailPage() {
                                 <span className="text-colour-2 font-bold text-lg">-${activity.money.toFixed(2)}</span>
                                 <FontAwesomeIcon icon={faCoins} className="mr-1  text-colour-2" />
                               </div>
+                              {activity.pending_quantity > 0 && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Pending: {activity.pending_quantity} × ${activity.money.toFixed(2)} = -${(activity.pending_quantity * activity.money).toFixed(2)}
+                                </div>
+                              )}
                             </div>
                           </div>
                           
-                          {editMode && (
-                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={() => handleEditActivity(activity)}
-                                className="bg-amber-500 hover:bg-amber-600 text-white p-2 rounded-lg shadow-sm transition-colors"
-                                title="Edit activity"
-                              >
-                                <FontAwesomeIcon icon={faEdit} className="text-sm" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteActivity(activity.activityId)}
-                                className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg shadow-sm transition-colors"
-                                title="Delete activity"
-                              >
-                                <FontAwesomeIcon icon={faTrash} className="text-sm" />
-                              </button>
-                            </div>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {!editMode && (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => handlePendingQuantityChange(activity.activityId, -1)}
+                                  disabled={activity.pending_quantity === 0}
+                                  className="bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                                  title="Decrease pending"
+                                >
+                                  <FontAwesomeIcon icon={faMinus} className="text-xs" />
+                                </button>
+                                <span className="text-sm font-medium min-w-[2rem] text-center">
+                                  {activity.pending_quantity}
+                                </span>
+                                <button
+                                  onClick={() => handlePendingQuantityChange(activity.activityId, 1)}
+                                  className="bg-green-500 hover:bg-green-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                                  title="Increase pending"
+                                >
+                                  <FontAwesomeIcon icon={faPlus} className="text-xs" />
+                                </button>
+                              </div>
+                            )}
+                            
+                            {editMode && (
+                              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => handleEditActivity(activity)}
+                                  className="bg-amber-500 hover:bg-amber-600 text-white p-2 rounded-lg shadow-sm transition-colors"
+                                  title="Edit activity"
+                                >
+                                  <FontAwesomeIcon icon={faEdit} className="text-sm" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteActivity(activity.activityId)}
+                                  className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg shadow-sm transition-colors"
+                                  title="Delete activity"
+                                >
+                                  <FontAwesomeIcon icon={faTrash} className="text-sm" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )}

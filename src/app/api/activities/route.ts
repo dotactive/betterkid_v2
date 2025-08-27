@@ -9,6 +9,7 @@ interface Activity {
   money: number;
   positive: boolean;
   top?: boolean;
+  pending_quantity?: number;
 }
 
 export async function GET(request: Request) {
@@ -37,6 +38,7 @@ export async function GET(request: Request) {
       money: item.money,
       positive: item.positive,
       top: item.top || false,
+      pending_quantity: item.pending_quantity || 0,
     })) || [];
 
     return NextResponse.json(activities);
@@ -90,6 +92,7 @@ export async function POST(request: Request) {
         money,
         positive,
         top: top || false,
+        pending_quantity: 0,
       },
       ConditionExpression: 'attribute_not_exists(partitionKey) AND attribute_not_exists(sortKey)',
     };

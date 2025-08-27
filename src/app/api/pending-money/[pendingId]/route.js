@@ -1,6 +1,45 @@
 import { NextResponse } from 'next/server';
-import { DeleteCommand, QueryCommand, PutCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
+import { DeleteCommand, QueryCommand, PutCommand, ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import dynamoDb from '@/lib/aws-config';
+
+// Helper function to reset activity pending quantity
+async function resetActivityPendingQuantity(activityId) {
+  try {
+    // Find the activity by activityId
+    const scanParams = {
+      TableName: 'betterkid_v2',
+      FilterExpression: 'activityId = :activityId',
+      ExpressionAttributeValues: {
+        ':activityId': activityId,
+      },
+    };
+
+    const scanResult = await dynamoDb.send(new ScanCommand(scanParams));
+    const activity = scanResult.Items?.[0];
+
+    if (activity) {
+      // Update the activity's pending_quantity to 0
+      const updateParams = {
+        TableName: 'betterkid_v2',
+        Key: {
+          partitionKey: activity.partitionKey,
+          sortKey: activity.sortKey,
+        },
+        UpdateExpression: 'SET pending_quantity = :pending_quantity',
+        ExpressionAttributeValues: {
+          ':pending_quantity': 0,
+        },
+        ConditionExpression: 'attribute_exists(partitionKey)',
+      };
+
+      await dynamoDb.send(new UpdateCommand(updateParams));
+      console.log(`Reset pending_quantity for activity ${activityId}`);
+    }
+  } catch (error) {
+    console.error(`Failed to reset pending_quantity for activity ${activityId}:`, error);
+    // Don't throw - continue with the main operation even if this fails
+  }
+}
 
 export async function DELETE(request, context) {
   try {
@@ -26,6 +65,11 @@ export async function DELETE(request, context) {
 
     if (!pending) {
       return NextResponse.json({ error: 'Pending money not found' }, { status: 404 });
+    }
+
+    // If this is an activity-type pending money, reset the activity's pending quantity
+    if (pending.type === 'activity' && pending.referenceId) {
+      await resetActivityPendingQuantity(pending.referenceId);
     }
 
     const deleteParams = {
@@ -77,6 +121,37 @@ export async function POST(request, context) {
       
       for (const item of pendingItems) {
         totalAmount += item.amount || 0;
+        
+        // If this is an activity item, reset the pending quantity and log it
+        if (item.type === 'activity' && item.referenceId) {
+          await resetActivityPendingQuantity(item.referenceId);
+          
+          // Add to balance log
+          const logId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          const logParams = {
+            TableName: 'betterkid_v2',
+            Item: {
+              partitionKey: `USER#${userId}`,
+              sortKey: `BALANCELOG#${logId}`,
+              logId,
+              userId,
+              amount: item.amount,
+              reason: item.reason,
+              type: item.amount >= 0 ? 'earn' : 'lose',
+              source: 'completed_activity',
+              timestamp: new Date().toISOString(),
+            },
+          };
+          
+          try {
+            await dynamoDb.send(new PutCommand(logParams));
+            console.log(`Logged activity approval: ${item.reason} (${item.amount >= 0 ? '+' : ''}${item.amount})`);
+            logEntries.push(`${item.reason} (${item.amount >= 0 ? '+' : ''}$${Math.abs(item.amount)})`);
+          } catch (error) {
+            console.error(`Failed to log activity approval ${item.referenceId}:`, error);
+            // Continue with approval even if logging fails
+          }
+        }
         
         // If this is a todo item, update the todo status to 'true' and log it
         if (item.type === 'todo' && item.referenceId) {
@@ -237,6 +312,36 @@ export async function POST(request, context) {
       }
       
       const amount = pending.amount || 0;
+      
+      // If this is an activity item, reset the pending quantity and log it
+      if (pending.type === 'activity' && pending.referenceId) {
+        await resetActivityPendingQuantity(pending.referenceId);
+        
+        // Add to balance log
+        const logId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const logParams = {
+          TableName: 'betterkid_v2',
+          Item: {
+            partitionKey: `USER#${userId}`,
+            sortKey: `BALANCELOG#${logId}`,
+            logId,
+            userId,
+            amount: pending.amount,
+            reason: pending.reason,
+            type: pending.amount >= 0 ? 'earn' : 'lose',
+            source: 'completed_activity',
+            timestamp: new Date().toISOString(),
+          },
+        };
+        
+        try {
+          await dynamoDb.send(new PutCommand(logParams));
+          console.log(`Logged activity approval: ${pending.reason} (${pending.amount >= 0 ? '+' : ''}${pending.amount})`);
+        } catch (error) {
+          console.error(`Failed to log activity approval ${pending.referenceId}:`, error);
+          // Continue with approval even if logging fails
+        }
+      }
       
       // If this is a todo item, update the todo status to 'true' and log it
       if (pending.type === 'todo' && pending.referenceId) {

@@ -109,3 +109,60 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const pendingId = searchParams.get('pendingId');
+    
+    if (!pendingId) {
+      return NextResponse.json({ error: 'Pending ID is required' }, { status: 400 });
+    }
+
+    const body = await request.json();
+    const { amount, reason }: { amount: number; reason: string } = body;
+    
+    if (typeof amount !== 'number' || !reason) {
+      return NextResponse.json({ error: 'Amount and reason are required' }, { status: 400 });
+    }
+
+    // Find the pending money record
+    const scanParams = {
+      TableName: 'betterkid_v2',
+      FilterExpression: 'pendingId = :pendingId',
+      ExpressionAttributeValues: {
+        ':pendingId': pendingId,
+      },
+    };
+
+    const scanResult = await dynamoDb.send(new ScanCommand(scanParams));
+    const pendingRecord = scanResult.Items?.[0];
+
+    if (!pendingRecord) {
+      return NextResponse.json({ error: 'Pending money not found' }, { status: 404 });
+    }
+
+    // Update the pending money record
+    const updateParams = {
+      TableName: 'betterkid_v2',
+      Item: {
+        ...pendingRecord,
+        amount,
+        reason,
+        updatedAt: new Date().toISOString(),
+      },
+    };
+
+    await dynamoDb.send(new PutCommand(updateParams));
+    console.log('Pending money updated successfully:', pendingId);
+
+    return NextResponse.json({ message: 'Pending money updated successfully' });
+  } catch (error) {
+    const err = error as Error;
+    console.error('Error updating pending money:', err);
+    return NextResponse.json(
+      { error: 'Failed to update pending money', details: err.message },
+      { status: 500 }
+    );
+  }
+}
