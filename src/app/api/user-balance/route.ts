@@ -62,16 +62,18 @@ export async function PUT(request: Request) {
 
     // Step 2: Update balance
     const updatedBalance = parseFloat(balance.toFixed(2));
+    const balanceChange = updatedBalance - currentBalance;
+    console.log(`Balance update for ${userId}: ${currentBalance} -> ${updatedBalance} (change: ${balanceChange > 0 ? '+' : ''}${balanceChange})`);
+    
     const putParams = {
       TableName: 'betterkid_v2',
       Item: marshall({ partitionKey, sortKey, balance: updatedBalance }),
     };
     await dynamoDb.send(new PutItemCommand(putParams));
-    console.log(`Balance updated for ${userId}: $${updatedBalance}`);
 
     // Step 3: Insert log entry
     const timestamp = new Date().toISOString();
-    const logId = `${Date.now()}`; // or use uuid
+    const logId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`; // More unique ID
     const logParams = {
       TableName: 'betterkid_v2',
       Item: marshall({
@@ -85,7 +87,8 @@ export async function PUT(request: Request) {
       }),
     };
     await dynamoDb.send(new PutItemCommand(logParams));
-    console.log(`Logged balance change for ${userId}`);
+    console.log(`Logged balance change for ${userId}: ${currentBalance} -> ${updatedBalance}, note: "${note || 'No note'}"`);
+    console.log(`Log entry created with ID: ${logId}`);
 
     return NextResponse.json({ message: 'Balance updated successfully', balance: updatedBalance });
   } catch (error) {

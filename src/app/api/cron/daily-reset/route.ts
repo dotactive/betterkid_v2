@@ -6,14 +6,22 @@ export async function GET(request: Request) {
   try {
     console.log('🕙 Daily reset cron job started at', new Date().toISOString());
     
-    // Verify this is actually a cron job request (Vercel adds specific headers)
+    // Check if this is a cron job request or a manual request
     const authHeader = request.headers.get('authorization');
     const userAgent = request.headers.get('user-agent');
+    const referer = request.headers.get('referer');
     
-    if (!authHeader?.includes('Bearer') && !userAgent?.includes('vercel')) {
-      console.warn('Unauthorized cron job request');
+    // Allow if it's a legitimate cron job OR a manual request from the app
+    const isCronJob = authHeader?.includes('Bearer') || userAgent?.includes('vercel');
+    const isManualRequest = referer?.includes(request.headers.get('host') || '');
+    
+    if (!isCronJob && !isManualRequest) {
+      console.warn('Unauthorized daily reset request');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    
+    const requestType = isCronJob ? 'cron job' : 'manual request';
+    console.log(`🔄 Daily reset started via ${requestType}`);
 
     let approvedCount = 0;
     let resetCount = 0;
@@ -285,7 +293,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Daily reset completed successfully',
+      message: `Daily reset completed successfully via ${requestType}`,
       summary,
     });
 

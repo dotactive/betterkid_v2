@@ -322,10 +322,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
              
 
               {editMode ? (
-                 <h2 className="text-2xl font-bold"> Welcome, <span className="text-colour-2">{username}</span></h2>
+                 <h2 className="text-2xl font-bold">Edit Mode</h2>
                 ) : (
-                  <h2 className="text-2xl font-bold">Edit Mode</h2>
-                
+                  
+                  <h2 className="text-2xl font-bold"> Welcome, <span className="text-colour-2">{username}</span></h2>
                 )}
 
               

@@ -6,60 +6,79 @@ export async function POST(request: Request) {
   let body: any;
   try {
     body = await request.json();
-    const { resetType } = body; // 'daily', 'weekly', or 'monthly'
+    const { resetType, userId } = body; // 'daily', 'weekly', or 'monthly' and optional userId
     
     if (!resetType || !['daily', 'weekly', 'monthly'].includes(resetType)) {
       return NextResponse.json({ error: 'Valid resetType is required (daily, weekly, monthly)' }, { status: 400 });
     }
 
-    console.log(`Starting ${resetType} todo reset...`);
+    console.log(`Starting ${resetType} activity reset${userId ? ` for user ${userId}` : ' (all users)'}...`);
 
-    // Get all completed todos (both 'pending' and 'true') of the specified type
+    // Build filter expression - check both TODO# and BEHAVIOR# prefixes for activities
+    let filterExpression = '(begins_with(sortKey, :todoSk) OR begins_with(sortKey, :behaviorSk)) AND #repeat = :repeat';
+    const expressionAttributeValues: any = {
+      ':todoSk': 'TODO#',
+      ':behaviorSk': 'BEHAVIOR#',
+      ':repeat': resetType,
+    };
+
+    // If userId is provided, filter by user
+    if (userId) {
+      filterExpression += ' AND partitionKey = :userId';
+      expressionAttributeValues[':userId'] = `USER#${userId}`;
+    }
+
     const params = {
       TableName: 'betterkid_v2',
-      FilterExpression: 'begins_with(sortKey, :sk) AND #repeat = :repeat AND (completed = :completedTrue OR completed = :completedPending)',
+      FilterExpression: filterExpression,
       ExpressionAttributeNames: {
         '#repeat': 'repeat',
       },
-      ExpressionAttributeValues: {
-        ':sk': 'TODO#',
-        ':repeat': resetType,
-        ':completedTrue': 'true',
-        ':completedPending': 'pending',
-      },
+      ExpressionAttributeValues: expressionAttributeValues,
     };
 
     const data = await dynamoDb.send(new ScanCommand(params));
-    const todosToReset = data.Items || [];
+    const itemsToReset = data.Items || [];
 
-    console.log(`Found ${todosToReset.length} completed ${resetType} todos to reset`);
+    console.log(`Found ${itemsToReset.length} ${resetType} activities/todos to reset`);
 
     let resetCount = 0;
     
-    // Reset each todo by setting completed to 'false'
-    for (const todo of todosToReset) {
+    // Reset each item by setting completed to 'false' and clearing pending quantities
+    for (const item of itemsToReset) {
       try {
+        const updatedItem = {
+          ...item,
+          completed: 'false',
+          lastResetAt: new Date().toISOString(),
+        };
+
+        // For activities (BEHAVIOR# prefix), also reset pending_quantity
+        if (item.sortKey?.startsWith('BEHAVIOR#')) {
+          updatedItem.pending_quantity = 0;
+        }
+
         const updateParams = {
           TableName: 'betterkid_v2',
-          Item: {
-            ...todo,
-            completed: 'false',
-            lastResetAt: new Date().toISOString(),
-          },
+          Item: updatedItem,
         };
 
         await dynamoDb.send(new PutCommand(updateParams));
         resetCount++;
-        console.log(`Reset todo: ${todo.text} for user ${todo.userId}`);
+        
+        const itemName = item.activityName || item.text || item.sortKey;
+        const itemType = item.sortKey?.startsWith('BEHAVIOR#') ? 'activity' : 'todo';
+        console.log(`Reset ${itemType}: ${itemName} for user ${userId || 'unknown'}`);
       } catch (error) {
-        console.error(`Failed to reset todo ${todo.todoId}:`, error);
+        console.error(`Failed to reset item ${item.activityId || item.todoId}:`, error);
       }
     }
 
     return NextResponse.json({ 
-      message: `Successfully reset ${resetCount} ${resetType} todos`,
+      message: `Successfully reset ${resetCount} ${resetType} activities`,
       resetCount,
-      resetType 
+      resetType,
+      userId: userId || null
     });
   } catch (error) {
     const err = error as Error;

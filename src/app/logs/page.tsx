@@ -19,6 +19,7 @@ export default function LogsPage() {
   const { isAuthenticated, userId } = useAuth();
   const [logs, setLogs] = useState<BalanceLog[]>([]);
   const [error, setError] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && userId) {
@@ -36,6 +37,40 @@ export default function LogsPage() {
     }
   };
 
+  const handleEmptyAllLogs = async () => {
+    const confirmed = confirm(
+      'Are you sure you want to delete ALL log entries?\n\n' +
+      'This will permanently remove:\n' +
+      `• All ${logs.length} activity logs\n` +
+      '• Balance change history\n' +
+      '• Transaction records\n\n' +
+      'This action cannot be undone!'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setError('');
+
+    try {
+      const response = await axios.delete(`/api/logs?userId=${encodeURIComponent(userId!)}`);
+      console.log('Delete response:', response.data);
+      
+      // Refresh the logs list (should be empty now)
+      await fetchLogs();
+      
+      alert(`Successfully deleted ${response.data.deletedCount} log entries!`);
+    } catch (err: any) {
+      console.error('Failed to delete logs:', err);
+      setError(err.response?.data?.error || 'Failed to delete logs');
+      alert('Failed to delete logs. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (isAuthenticated === null) {
     return <div className="flex items-center justify-center min-h-screen text-gray-600">Loading authentication...</div>;
   }
@@ -46,6 +81,31 @@ export default function LogsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-white shadow-md rounded-md overflow-x-auto">
+      <div className="mb-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">📋 Activity Logs</h1>
+          
+          {logs.length > 0 && (
+            <button
+              onClick={handleEmptyAllLogs}
+              disabled={isDeleting}
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                isDeleting
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-red-500 hover:bg-red-600 text-white hover:shadow-md'
+              }`}
+            >
+              {isDeleting ? '🗑️ Deleting...' : '🗑️ Empty All Logs'}
+            </button>
+          )}
+        </div>
+        
+        {logs.length > 0 && (
+          <p className="text-sm text-gray-600 mt-2">
+            {logs.length} log {logs.length === 1 ? 'entry' : 'entries'} • Click "Empty All Logs" to clear your history
+          </p>
+        )}
+      </div>
   
       {error && <p className="text-red-600 mb-4">{error}</p>}
       <div className="">
@@ -75,16 +135,34 @@ export default function LogsPage() {
                     {new Date(log.timestamp).toLocaleString()}
                   </td>
                   <td className="px-4 py-2 whitespace-nowrap text-sm">
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                      log.type === 'earn' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {log.type || 'unknown'}
-                    </span>
+                    {(() => {
+                      // Determine type from balance change
+                      const balanceChange = (log.balanceAfter ?? 0) - (log.balanceBefore ?? 0);
+                      const isPositive = balanceChange >= 0;
+                      const type = isPositive ? 'earn' : 'lose';
+                      
+                      return (
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                          isPositive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {type}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
-                    <span className={log.type === 'earn' ? 'text-green-600' : 'text-red-600'}>
-                      {log.type === 'earn' ? '+' : '-'}${(log.amount || 0).toFixed(2)}
-                    </span>
+                    {(() => {
+                      // Calculate amount from balance change
+                      const balanceChange = (log.balanceAfter ?? 0) - (log.balanceBefore ?? 0);
+                      const amount = Math.abs(balanceChange);
+                      const isPositive = balanceChange >= 0;
+                      
+                      return (
+                        <span className={isPositive ? 'text-green-600' : 'text-red-600'}>
+                          {isPositive ? '+' : '-'}${amount.toFixed(2)}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-2 text-sm text-gray-700">
                     {log.reason || log.note || '-'}

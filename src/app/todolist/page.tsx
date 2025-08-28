@@ -361,13 +361,13 @@ export default function TodoListPage() {
                   {/* Show earn message if completeAward > 0 */}
                   {completeAward > 0 && (
                     <p className="text-sm text-green-600 font-medium mt-1">
-                      💰 You will earn ${completeAward} for each completed task after {resetTime}
+                      You will earn ${completeAward} for completing all daily activities after {resetTime}
                     </p>
                   )}
                   {/* Show lose message if uncompleteFine > 0 and there are uncompleted tasks */}
                   {uncompleteFine > 0 && uncompletedCount > 0 && (
                     <p className="text-sm text-red-600 font-medium mt-1">
-                      ⚠️ You have {uncompletedCount} uncompleted task{uncompletedCount !== 1 ? 's' : ''}, you will lose ${uncompleteFine} after {resetTime}
+                      You have {uncompletedCount} uncompleted activitie{uncompletedCount !== 1 ? 's' : ''}, you will lose ${uncompleteFine} after {resetTime}
                     </p>
                   )}
                 </div>
@@ -401,9 +401,10 @@ export default function TodoListPage() {
                 const confirmed = confirm(
                   'Are you sure you want to run the daily reset?\n\n' +
                   'This will:\n' +
-                  '• Approve all pending activities\n' +
-                  '• Reset daily activities to incomplete\n' +
-                  '• Clean up pending money records\n\n' +
+                  '• Approve all pending rewards\n' +
+                  '• Check if all daily activities are complete\n' +
+                  '• Award complete bonus OR apply incomplete fine\n' +
+                  '• Reset daily activities to incomplete\n\n' +
                   'This action cannot be undone.'
                 );
                 
@@ -413,25 +414,109 @@ export default function TodoListPage() {
 
                 try {
                   setResetStatus('Running daily reset...');
-                  const response = await axios.get('/api/cron/daily-reset');
-                  if (response.data.success) {
-                    setResetStatus('✅ Daily reset completed successfully');
+                  
+                  // Step 1: Approve all pending rewards
+                  try {
+                    const pendingResponse = await axios.get(`/api/pending-money?userId=${encodeURIComponent(userId!)}`);
+                    const pendingItems = pendingResponse.data || [];
+                    
+                    // Get current balance
+                    const balanceResponse = await axios.get(`/api/user-balance?userId=${encodeURIComponent(userId!)}`);
+                    let currentBalance = balanceResponse.data.balance || 0;
+                    
+                    for (const item of pendingItems) {
+                      try {
+                        // Add pending amount to current balance
+                        currentBalance += item.amount;
+                        await axios.put('/api/user-balance', {
+                          userId: userId,
+                          balance: currentBalance,
+                          note: `Approved: ${item.reason}`
+                        });
+                        
+                        await axios.delete(`/api/pending-money/${item.pendingId}`, {
+                          headers: { 'x-userid': userId }
+                        });
+                      } catch (err) {
+                        console.error('Error approving pending item:', err);
+                      }
+                    }
+                    
+                    setResetStatus(`Approved ${pendingItems.length} pending rewards...`);
+                  } catch (err) {
+                    console.error('Error processing pending rewards:', err);
+                  }
+
+                  // Step 2: Check completion status and apply awards/fines
+                  const dailyActivities = activities.filter(activity => activity.repeat === 'daily');
+                  const uncompletedDaily = dailyActivities.filter(activity => 
+                    activity.completed === 'false'
+                  );
+                  
+                  let awardMessage = '';
+                  if (dailyActivities.length > 0) {
+                    // Get fresh balance after pending approvals
+                    const balanceResponse = await axios.get(`/api/user-balance?userId=${encodeURIComponent(userId!)}`);
+                    let currentBalance = balanceResponse.data.balance || 0;
+                    console.log('Current balance before awards/fines:', currentBalance);
+                    
+                    if (uncompletedDaily.length === 0 && completeAward > 0) {
+                      // All daily activities completed - give award
+                      try {
+                        const newBalance = currentBalance + completeAward;
+                        console.log(`Applying completion bonus: ${currentBalance} + ${completeAward} = ${newBalance}`);
+                        await axios.put('/api/user-balance', {
+                          userId: userId,
+                          balance: newBalance,
+                          note: `Daily completion bonus: All ${dailyActivities.length} activities completed (+$${completeAward})`
+                        });
+                        awardMessage = ` Earned $${completeAward} completion bonus!`;
+                      } catch (err) {
+                        console.error('Error applying complete award:', err);
+                      }
+                    } else if (uncompletedDaily.length > 0 && uncompleteFine > 0) {
+                      // Some activities incomplete - apply fine
+                      const totalFine = uncompletedDaily.length * uncompleteFine;
+                      try {
+                        const newBalance = currentBalance - totalFine;
+                        console.log(`Applying incomplete fine: ${currentBalance} - ${totalFine} = ${newBalance}`);
+                        await axios.put('/api/user-balance', {
+                          userId: userId,
+                          balance: newBalance,
+                          note: `Daily incomplete fine: ${uncompletedDaily.length} activities not completed ($${uncompleteFine} per activity = $${totalFine} total)`
+                        });
+                        awardMessage = ` Applied $${totalFine} incomplete fine.`;
+                      } catch (err) {
+                        console.error('Error applying incomplete fine:', err);
+                      }
+                    }
+                  }
+
+                  // Step 3: Reset daily activities
+                  const response = await axios.post('/api/todos/reset', {
+                    resetType: 'daily',
+                    userId: userId
+                  });
+                  
+                  if (response.data.resetCount !== undefined) {
+                    setResetStatus(`✅ Reset ${response.data.resetCount} daily activities.${awardMessage}`);
                     fetchActivities(); // Refresh activities
+                    await refreshPendingMoney(); // Refresh pending money
                   } else {
                     setResetStatus('❌ Daily reset failed');
                   }
-                } catch (error) {
+                } catch (error: any) {
                   console.error('Daily reset error:', error);
-                  setResetStatus('❌ Daily reset failed');
+                  setResetStatus(`❌ Daily reset failed: ${error.response?.data?.error || 'Unknown error'}`);
                 }
-                setTimeout(() => setResetStatus(''), 5000);
+                setTimeout(() => setResetStatus(''), 8000); // Longer timeout for more complex message
               }}
               className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
             >
               🔄 Run Daily Reset
             </button>
             <p className="text-sm text-orange-700 mt-2">
-              ℹ️ This will approve all pending activities, reset daily activities to incomplete, and clean up pending money records. Note: The automatic daily reset only runs for users with Auto Reset enabled.
+              ℹ️ This will approve all pending rewards, check completion status, apply completion bonus or incomplete fine, then reset your daily activities. This only affects your own activities.
             </p>
           </div>
         )}
