@@ -263,7 +263,7 @@ export default function TodoListPage() {
       }
       
       // Update local state
-      const updatedActivities = activities.map(a => 
+      const updatedActivities: Activity[] = activities.map(a => 
         a.activityId === activityId 
           ? { ...a, pending_quantity: newPendingQuantity, completed: newCompletedStatus }
           : a
