@@ -36,8 +36,8 @@ export async function GET(request: Request, context: { params: Promise<{ userId:
       email: user.email,
       parentCode: user.parentCode || '',
       resetTime: '22:00', // Fixed reset time at 10:00 PM for all users
-      completeAward: user.completeAward || 1.0,
-      uncompleteFine: user.uncompleteFine || 0.5,
+      completeAward: user.completeAward !== undefined ? user.completeAward : 1.0,
+      uncompleteFine: user.uncompleteFine !== undefined ? user.uncompleteFine : 0.5,
       autoReset: user.autoReset || false,
     };
 
@@ -130,8 +130,8 @@ export async function PUT(request: Request, context: { params: Promise<{ userId:
       email: updatedUser.email,
       parentCode: updatedUser.parentCode || '',
       resetTime: '22:00', // Fixed reset time at 10:00 PM for all users
-      completeAward: updatedUser.completeAward || 1.0,
-      uncompleteFine: updatedUser.uncompleteFine || 0.5,
+      completeAward: updatedUser.completeAward !== undefined ? updatedUser.completeAward : 1.0,
+      uncompleteFine: updatedUser.uncompleteFine !== undefined ? updatedUser.uncompleteFine : 0.5,
       autoReset: updatedUser.autoReset || false,
     };
 

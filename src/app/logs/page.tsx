@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '@/hooks/useAuth';
+import { useEditMode } from '@/hooks/useEditMode';
 
 interface BalanceLog {
   logId: string;
@@ -20,7 +21,7 @@ export default function LogsPage() {
   const [logs, setLogs] = useState<BalanceLog[]>([]);
   const [error, setError] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
-
+  const { editMode } = useEditMode();
   useEffect(() => {
     if (isAuthenticated && userId) {
       fetchLogs();
@@ -83,9 +84,9 @@ export default function LogsPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-white shadow-md rounded-md overflow-x-auto">
       <div className="mb-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">📋 Activity Logs</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Activity Logs</h1>
           
-          {logs.length > 0 && (
+          {logs.length > 0 && editMode  && (
             <button
               onClick={handleEmptyAllLogs}
               disabled={isDeleting}
@@ -95,16 +96,12 @@ export default function LogsPage() {
                   : 'bg-red-500 hover:bg-red-600 text-white hover:shadow-md'
               }`}
             >
-              {isDeleting ? '🗑️ Deleting...' : '🗑️ Empty All Logs'}
+              {isDeleting ? ' Deleting...' : 'Empty All Logs'}
             </button>
           )}
         </div>
         
-        {logs.length > 0 && (
-          <p className="text-sm text-gray-600 mt-2">
-            {logs.length} log {logs.length === 1 ? 'entry' : 'entries'} • Click "Empty All Logs" to clear your history
-          </p>
-        )}
+
       </div>
   
       {error && <p className="text-red-600 mb-4">{error}</p>}

@@ -263,11 +263,18 @@ export default function TodoListPage() {
       }
       
       // Update local state
-      setActivities(prev => prev.map(a => 
+      const updatedActivities = activities.map(a => 
         a.activityId === activityId 
           ? { ...a, pending_quantity: newPendingQuantity, completed: newCompletedStatus }
           : a
-      ));
+      );
+      setActivities(updatedActivities);
+      
+      // Update uncompleted count for daily activities
+      const uncompletedDaily = updatedActivities.filter(
+        (activity: Activity) => activity.repeat === 'daily' && activity.completed === 'false'
+      ).length;
+      setUncompletedCount(uncompletedDaily);
       
       // Refresh global pending money state
       await refreshPendingMoney();
