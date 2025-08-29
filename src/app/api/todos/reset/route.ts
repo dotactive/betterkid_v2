@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     // Reset each item by setting completed to 'false' and clearing pending quantities
     for (const item of itemsToReset) {
       try {
-        const updatedItem = {
+        const updatedItem: any = {
           ...item,
           completed: 'false',
           lastResetAt: new Date().toISOString(),
