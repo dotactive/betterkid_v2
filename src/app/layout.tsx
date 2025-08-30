@@ -250,7 +250,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       <header className={`text-white ${
                   editMode 
                     ? 'bg-gray-800' 
-                    : 'bg-blue-500'
+                    : 'pr-bg'
                 }`}
                 >
         {/* Top section with logo and controls */}
@@ -283,19 +283,19 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             <nav className=" text-white-900 py-0 px-0 mt-5">
           <div className="flex justify-center gap-6 font-medium">
 
-                <Link href="/behaviors" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
+                <Link href="/behaviors" className="btn-pr transition-colors px-3 py-2 rounded-md ">
                   Behaviors
                 </Link>
-                <Link href="/activities" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
+                <Link href="/activities" className="btn-pr transition-colors px-3 py-2 rounded-md ">
                   Activities
                 </Link>
-                <Link href="/todolist" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
+                <Link href="/todolist" className="btn-pr transition-colors px-3 py-2 rounded-md ">
                   Todo List
                 </Link>
-                <Link href="/spend" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
+                <Link href="/spend" className="btn-pr transition-colors px-3 py-2 rounded-md ">
                   Spend Coins
                 </Link>
-                <Link href="/logs" className="hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-blue-50">
+                <Link href="/logs" className="btn-pr transition-colors px-3 py-2 rounded-md ">
                   Logs
                 </Link>
 
@@ -385,7 +385,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             <footer  className={`text-white  mt-5 ${
                   editMode 
                     ? 'bg-gray-800' 
-                    : 'bg-blue-500'
+                    : 'pr-bg'
                 }`}>
             <div className="py-4 flex flex-col md:flex-row justify-between items-center max-w-4xl mx-auto mx-auto">
           <div className="text-center md:text-left">

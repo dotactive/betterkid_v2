@@ -195,15 +195,30 @@ export async function POST(request, context) {
       let totalAmount = 0;
       const logEntries = [];
       
+      // Get current balance before processing approvals
+      const currentBalanceData = await dynamoDb.send(new QueryCommand({
+        TableName: 'betterkid_v2',
+        KeyConditionExpression: 'partitionKey = :pk AND sortKey = :sk',
+        ExpressionAttributeValues: {
+          ':pk': `USER#${userId}`,
+          ':sk': 'ACCOUNT#balance',
+        },
+      }));
+      let currentBalance = currentBalanceData.Items?.[0]?.balance || 0;
+      
       for (const item of pendingItems) {
-        totalAmount += item.amount || 0;
+        const itemAmount = item.amount || 0;
+        totalAmount += itemAmount;
         
         // If this is an activity item, reset the pending quantity and log it
         if (item.type === 'activity' && item.referenceId) {
           await handleActivityApproval(item.referenceId);
           
-          // Add to balance log
+          // Add to balance log with proper balance tracking
           const logId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          const balanceBefore = currentBalance;
+          const balanceAfter = currentBalance + itemAmount;
+          
           const logParams = {
             TableName: 'betterkid_v2',
             Item: {
@@ -211,9 +226,11 @@ export async function POST(request, context) {
               sortKey: `BALANCELOG#${logId}`,
               logId,
               userId,
-              amount: item.amount,
+              amount: itemAmount,
+              balanceBefore: balanceBefore,
+              balanceAfter: balanceAfter,
               reason: item.reason,
-              type: item.amount >= 0 ? 'earn' : 'lose',
+              type: itemAmount >= 0 ? 'earn' : 'lose',
               source: 'completed_activity',
               timestamp: new Date().toISOString(),
             },
@@ -221,8 +238,9 @@ export async function POST(request, context) {
           
           try {
             await dynamoDb.send(new PutCommand(logParams));
-            console.log(`Logged activity approval: ${item.reason} (${item.amount >= 0 ? '+' : ''}${item.amount})`);
-            logEntries.push(`${item.reason} (${item.amount >= 0 ? '+' : ''}$${Math.abs(item.amount)})`);
+            console.log(`Logged activity approval: ${item.reason} (${itemAmount >= 0 ? '+' : ''}${itemAmount})`);
+            logEntries.push(`${item.reason} (${itemAmount >= 0 ? '+' : ''}$${Math.abs(itemAmount)})`);
+            currentBalance = balanceAfter; // Update running balance
           } catch (error) {
             console.error(`Failed to log activity approval ${item.referenceId}:`, error);
             // Continue with approval even if logging fails
@@ -273,8 +291,11 @@ export async function POST(request, context) {
               }
             }
             
-            // Add to balance log
+            // Add to balance log with proper balance tracking
             const logId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const balanceBefore = currentBalance;
+            const balanceAfter = currentBalance + itemAmount;
+            
             const logParams = {
               TableName: 'betterkid_v2',
               Item: {
@@ -282,7 +303,9 @@ export async function POST(request, context) {
                 sortKey: `BALANCELOG#${logId}`,
                 logId,
                 userId,
-                amount: item.amount,
+                amount: itemAmount,
+                balanceBefore: balanceBefore,
+                balanceAfter: balanceAfter,
                 reason: item.reason,
                 type: 'earn',
                 source: 'completed_todo',
@@ -290,7 +313,8 @@ export async function POST(request, context) {
               },
             };
             await dynamoDb.send(new PutCommand(logParams));
-            logEntries.push(`${item.reason} (+$${item.amount})`);
+            logEntries.push(`${item.reason} (+$${itemAmount})`);
+            currentBalance = balanceAfter; // Update running balance
           } catch (error) {
             console.error(`Failed to update todo ${item.referenceId}:`, error);
             // Continue with other items even if one fails
@@ -389,12 +413,26 @@ export async function POST(request, context) {
       
       const amount = pending.amount || 0;
       
+      // Get current balance for proper logging
+      const currentBalanceData = await dynamoDb.send(new QueryCommand({
+        TableName: 'betterkid_v2',
+        KeyConditionExpression: 'partitionKey = :pk AND sortKey = :sk',
+        ExpressionAttributeValues: {
+          ':pk': `USER#${userId}`,
+          ':sk': 'ACCOUNT#balance',
+        },
+      }));
+      const currentBalance = currentBalanceData.Items?.[0]?.balance || 0;
+      
       // If this is an activity item, reset the pending quantity and log it
       if (pending.type === 'activity' && pending.referenceId) {
         await handleActivityApproval(pending.referenceId);
         
-        // Add to balance log
+        // Add to balance log with proper balance tracking
         const logId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const balanceBefore = currentBalance;
+        const balanceAfter = currentBalance + amount;
+        
         const logParams = {
           TableName: 'betterkid_v2',
           Item: {
@@ -402,9 +440,11 @@ export async function POST(request, context) {
             sortKey: `BALANCELOG#${logId}`,
             logId,
             userId,
-            amount: pending.amount,
+            amount: amount,
+            balanceBefore: balanceBefore,
+            balanceAfter: balanceAfter,
             reason: pending.reason,
-            type: pending.amount >= 0 ? 'earn' : 'lose',
+            type: amount >= 0 ? 'earn' : 'lose',
             source: 'completed_activity',
             timestamp: new Date().toISOString(),
           },
@@ -412,7 +452,7 @@ export async function POST(request, context) {
         
         try {
           await dynamoDb.send(new PutCommand(logParams));
-          console.log(`Logged activity approval: ${pending.reason} (${pending.amount >= 0 ? '+' : ''}${pending.amount})`);
+          console.log(`Logged activity approval: ${pending.reason} (${amount >= 0 ? '+' : ''}${amount})`);
         } catch (error) {
           console.error(`Failed to log activity approval ${pending.referenceId}:`, error);
           // Continue with approval even if logging fails
@@ -463,8 +503,11 @@ export async function POST(request, context) {
             }
           }
           
-          // Add to balance log
+          // Add to balance log with proper balance tracking
           const logId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          const balanceBefore = currentBalance;
+          const balanceAfter = currentBalance + amount;
+          
           const logParams = {
             TableName: 'betterkid_v2',
             Item: {
@@ -472,7 +515,9 @@ export async function POST(request, context) {
               sortKey: `BALANCELOG#${logId}`,
               logId,
               userId,
-              amount: pending.amount,
+              amount: amount,
+              balanceBefore: balanceBefore,
+              balanceAfter: balanceAfter,
               reason: pending.reason,
               type: 'earn',
               source: 'completed_todo',

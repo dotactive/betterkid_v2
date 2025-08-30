@@ -107,7 +107,11 @@ export default function EditCoinsPage() {
   };
 
   if (isAuthenticated === null) {
-    return <div className="flex items-center justify-center min-h-screen text-gray-600">Loading authentication...</div>;
+    return (
+      <div className="min-h-screen main-bg flex items-center justify-center">
+        <div className="text-colour-1 text-lg font-medium">🔄 Loading authentication...</div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
@@ -115,91 +119,140 @@ export default function EditCoinsPage() {
   }
 
   if (!editMode) {
-    return <div className="flex items-center justify-center min-h-screen text-gray-600">Redirecting...</div>;
+    return (
+      <div className="min-h-screen main-bg flex items-center justify-center">
+        <div className="text-colour-2 text-lg font-medium">🔄 Redirecting...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="py-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">Edit Coins for {userId}</h1>
-      {error && <p className="text-red-600 mb-4">{error}</p>}
-      {success && <p className="text-green-600 mb-4">{success}</p>}
-      
-      <div className="bg-white shadow-md rounded-lg p-6">
-        <div className="mb-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-2">Current Balance: ${balance.toFixed(2)}</h2>
-          <h2 className="text-lg font-medium text-blue-600">
-            Changes: ${changes.toFixed(2)}
-          </h2>
-          <p className="text-sm text-gray-600 mt-1">
-            New Balance: ${(balance + changes + (inputAmount ? parseFloat(inputAmount) || 0 : 0)).toFixed(2)}
-          </p>
+    <div className="min-h-screen main-bg py-8 px-4">
+      <div className="max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-colour-1 mb-2">💰 Edit Coins</h1>
+          <p className="text-gray-600 text-lg">Managing coins for <span className="font-semibold text-colour-2">{userId}</span></p>
         </div>
+
+        {/* Alert Messages */}
+        {error && (
+          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
+            <p className="text-red-600 font-medium">🚫 {error}</p>
+          </div>
+        )}
+        {success && (
+          <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 mb-6">
+            <p className="text-green-600 font-medium">🎉 {success}</p>
+          </div>
+        )}
         
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <button
-            onClick={() => handleButtonClick(1.00)}
-            className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
-          >
-            +$1.00
-          </button>
-          <button
-            onClick={() => handleButtonClick(0.50)}
-            className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
-          >
-            +$0.50
-          </button>
-          <button
-            onClick={() => handleButtonClick(0.10)}
-            className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
-          >
-            +$0.10
-          </button>
-          <button
-            onClick={() => handleButtonClick(-1.00)}
-            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
-          >
-            -$1.00
-          </button>
-          <button
-            onClick={() => handleButtonClick(-0.50)}
-            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
-          >
-            -$0.50
-          </button>
-          <button
-            onClick={() => handleButtonClick(-0.10)}
-            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
-          >
-            -$0.10
-          </button>
-        </div>
+        {/* Main Card */}
+        <div className="bg-white shadow-xl rounded-2xl border-2 border-colour-3 p-8">
+          {/* Balance Display */}
+          <div className="mb-8 text-center background-colour-3 rounded-xl p-6 text-white">
+            <h2 className="text-2xl font-bold mb-3">💳 Balance Overview</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white bg-opacity-20 rounded-lg p-4">
+                <p className="text-sm opacity-90">Current Balance</p>
+                <p className="text-3xl font-bold">${balance.toFixed(2)}</p>
+              </div>
+              <div className="bg-white bg-opacity-20 rounded-lg p-4">
+                <p className="text-sm opacity-90">Pending Changes</p>
+                <p className={`text-3xl font-bold ${changes >= 0 ? 'text-green-200' : 'text-red-200'}`}>
+                  {changes >= 0 ? '+' : ''}${changes.toFixed(2)}
+                </p>
+              </div>
+              <div className="bg-white bg-opacity-20 rounded-lg p-4">
+                <p className="text-sm opacity-90">New Balance</p>
+                <p className="text-3xl font-bold">
+                  ${(balance + changes + (inputAmount ? parseFloat(inputAmount) || 0 : 0)).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </div>
         
-        <div className="flex flex-col gap-4 mb-4">
-          <input
-            type="text"
-            value={inputAmount}
-            onChange={handleInputChange}
-            placeholder="Enter amount (e.g., -15.25)"
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <textarea
-            value={note}
-            onChange={handleNoteChange}
-            placeholder="Add a note to this transaction (optional)"
-            rows={3}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            onClick={handleSubmit}
-            disabled={changes === 0 && !inputAmount}
-            className={`px-6 py-2 rounded-md transition-colors ${
-              changes === 0 && !inputAmount
-                ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            Submit Changes
-          </button>
+          {/* Quick Action Buttons */}
+          <div className="mb-8">
+            <h3 className="text-xl font-bold text-colour-2 mb-4 text-center">⚡ Quick Actions</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              <button
+                onClick={() => handleButtonClick(1.00)}
+                className="btn-1 py-3 px-4 rounded-xl font-bold text-sm transition duration-300 hover:scale-105"
+              >
+                🪙 +$1.00
+              </button>
+              <button
+                onClick={() => handleButtonClick(0.50)}
+                className="btn-1 py-3 px-4 rounded-xl font-bold text-sm transition duration-300 hover:scale-105"
+              >
+                🪙 +$0.50
+              </button>
+              <button
+                onClick={() => handleButtonClick(0.10)}
+                className="btn-1 py-3 px-4 rounded-xl font-bold text-sm transition duration-300 hover:scale-105"
+              >
+                🪙 +$0.10
+              </button>
+              <button
+                onClick={() => handleButtonClick(-1.00)}
+                className="btn-2 py-3 px-4 rounded-xl font-bold text-sm transition duration-300 hover:scale-105"
+              >
+                💸 -$1.00
+              </button>
+              <button
+                onClick={() => handleButtonClick(-0.50)}
+                className="btn-2 py-3 px-4 rounded-xl font-bold text-sm transition duration-300 hover:scale-105"
+              >
+                💸 -$0.50
+              </button>
+              <button
+                onClick={() => handleButtonClick(-0.10)}
+                className="btn-2 py-3 px-4 rounded-xl font-bold text-sm transition duration-300 hover:scale-105"
+              >
+                💸 -$0.10
+              </button>
+            </div>
+          </div>
+        
+          {/* Custom Amount & Notes */}
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-semibold text-colour-3 mb-2">💰 Custom Amount</label>
+              <input
+                type="text"
+                value={inputAmount}
+                onChange={handleInputChange}
+                placeholder="Enter amount (e.g., 10.50 or -15.25)"
+                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-colour-3 focus:outline-none transition duration-300"
+              />
+              <p className="text-xs text-gray-500 mt-1">Use positive numbers to add coins, negative to subtract</p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-semibold text-colour-3 mb-2">📝 Transaction Note</label>
+              <textarea
+                value={note}
+                onChange={handleNoteChange}
+                placeholder="Add a note explaining this transaction (optional)"
+                rows={3}
+                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-colour-3 focus:outline-none transition duration-300 resize-none"
+              />
+              <p className="text-xs text-gray-500 mt-1">This note will help track why coins were added or removed</p>
+            </div>
+            
+            <button
+              onClick={handleSubmit}
+              disabled={changes === 0 && !inputAmount}
+              className={`w-full py-4 rounded-xl text-lg font-bold transition duration-300 ${
+                changes === 0 && !inputAmount
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'btn-3 hover:scale-105'
+              }`}
+            >
+              {changes === 0 && !inputAmount ? '🔒 No Changes to Submit' : '✅ Submit Changes'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

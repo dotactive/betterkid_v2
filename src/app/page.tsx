@@ -3,47 +3,68 @@ import Link from 'next/link';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-blue-50 font-sans">
+    <div className="min-h-screen main-bg font-sans">
+      {/* Navigation/Header */}
+      <nav className="bg-white shadow-sm py-4">
+        <div className="container mx-auto px-4 flex justify-between items-center">
+        <img src="/betterlogo.png?v=1" alt="Logo" className="w-40" />
+          <div className="flex gap-3">
+            <Link
+              href="/login"
+              className="btn-3 py-2 px-6 rounded-full font-semibold transition duration-300"
+            >
+              Login
+            </Link>
+            <Link
+              href="/register"
+              className="btn-1 py-2 px-6 rounded-full font-semibold transition duration-300"
+            >
+              Sign Up Free
+            </Link>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-500 to-green-400 text-white py-20">
+      <section className="pr-bg text-white py-20">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6">
             Reward Kids for Chores, Spark Financial Smarts!
           </h1>
-          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
-            Parents set fun tasks, kids earn coins, and shop for toys with eBay or Amazon. Safe, educational, and exciting!
+          <p className="text-xl md:text-2xl mb-8 opacity-90">
+            Turn chores into fun adventures with coins and rewards!
           </p>
-          <Link
-            href="/register"
-            className="bg-yellow-400 text-blue-900 font-semibold py-3 px-6 rounded-full hover:bg-yellow-300 transition duration-300"
-          >
-            Sign Up Free
-          </Link>
-          <div className="mt-10">
-            <img
-              src="https://via.placeholder.com/600x400?text=Happy+Kids+Doing+Chores"
-              alt="Kids doing chores"
-              className="mx-auto rounded-lg shadow-lg max-w-full h-auto"
-            />
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
+            <Link
+              href="/register"
+              className="btn-1 py-4 px-8 rounded-full text-lg font-bold transition duration-300 inline-block"
+            >
+              🚀 Start Free Today
+            </Link>
+            <Link
+              href="/login"
+              className="btn-2 py-4 px-8 rounded-full text-lg font-bold transition duration-300 inline-block"
+            >
+              👋 Welcome Back
+            </Link>
           </div>
+
+
         </div>
       </section>
 
       {/* Features Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-blue-900 mb-12">
+          <h2 className="text-3xl font-bold text-center text-colour-1 mb-12">
             How It Works
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Feature 1: Tasks & Rewards */}
-            <div className="text-center p-6 bg-blue-100 rounded-lg shadow-md">
-              <img
-                src="https://via.placeholder.com/64?text=📋"
-                alt="Tasks Icon"
-                className="mx-auto mb-4"
-              />
-              <h3 className="text-xl font-semibold text-blue-900 mb-2">
+            <div className="text-center p-6 bg-white border-4 border-colour-1 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
+              <div className="text-5xl mb-4">📋</div>
+              <h3 className="text-xl font-semibold text-colour-1 mb-3">
                 Fun Tasks & Rewards
               </h3>
               <p className="text-gray-600">
@@ -51,13 +72,9 @@ export default function HomePage() {
               </p>
             </div>
             {/* Feature 2: Virtual Coins */}
-            <div className="text-center p-6 bg-yellow-100 rounded-lg shadow-md">
-              <img
-                src="https://via.placeholder.com/64?text=🪙"
-                alt="Coins Icon"
-                className="mx-auto mb-4"
-              />
-              <h3 className="text-xl font-semibold text-blue-900 mb-2">
+            <div className="text-center p-6 bg-white border-4 border-colour-2 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
+              <div className="text-5xl mb-4">🪙</div>
+              <h3 className="text-xl font-semibold text-colour-2 mb-3">
                 Virtual Coins
               </h3>
               <p className="text-gray-600">
@@ -65,13 +82,9 @@ export default function HomePage() {
               </p>
             </div>
             {/* Feature 3: Shop with Coins */}
-            <div className="text-center p-6 bg-green-100 rounded-lg shadow-md">
-              <img
-                src="https://via.placeholder.com/64?text=🛒"
-                alt="Shopping Icon"
-                className="mx-auto mb-4"
-              />
-              <h3 className="text-xl font-semibold text-blue-900 mb-2">
+            <div className="text-center p-6 bg-white border-4 border-colour-3 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
+              <div className="text-5xl mb-4">🛒</div>
+              <h3 className="text-xl font-semibold text-colour-3 mb-3">
                 Shop with Coins
               </h3>
               <p className="text-gray-600">
@@ -79,13 +92,9 @@ export default function HomePage() {
               </p>
             </div>
             {/* Feature 4: Parental Controls */}
-            <div className="text-center p-6 bg-blue-100 rounded-lg shadow-md">
-              <img
-                src="https://via.placeholder.com/64?text=🔒"
-                alt="Lock Icon"
-                className="mx-auto mb-4"
-              />
-              <h3 className="text-xl font-semibold text-blue-900 mb-2">
+            <div className="text-center p-6 bg-white border-4 border-colour-1 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
+              <div className="text-5xl mb-4">🔒</div>
+              <h3 className="text-xl font-semibold text-colour-1 mb-3">
                 Parental Controls
               </h3>
               <p className="text-gray-600">
@@ -97,17 +106,17 @@ export default function HomePage() {
       </section>
 
       {/* Social Proof Section */}
-      <section className="py-16 bg-gray-100">
+      <section className="py-16 main-bg">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-blue-900 mb-12">
+          <h2 className="text-3xl font-bold text-center text-colour-2 mb-12">
             Loved by Parents & Kids
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-lg shadow-md text-center">
+            <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-colour-1 text-center hover:shadow-xl transition duration-300">
               <p className="text-gray-600 italic mb-4">
                 “My kids love earning coins for chores! It’s made our home so much tidier.”
               </p>
-              <p className="font-semibold text-blue-900">— Sarah, Mom of Two</p>
+              <p className="font-semibold text-colour-1">— Rano, Dad of Two</p>
               <div className="flex justify-center mt-2">
                 {[...Array(5)].map((_, i) => (
                   <svg key={i} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
@@ -116,11 +125,11 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-md text-center">
+            <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-colour-1 text-center hover:shadow-xl transition duration-300">
               <p className="text-gray-600 italic mb-4">
                 “The coin system taught my son to save for what he wants. Amazing!”
               </p>
-              <p className="font-semibold text-blue-900">— James, Dad</p>
+              <p className="font-semibold text-colour-2">— Sarah, Mom</p>
               <div className="flex justify-center mt-2">
                 {[...Array(5)].map((_, i) => (
                   <svg key={i} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
@@ -129,11 +138,11 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-md text-center">
+            <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-colour-1 text-center hover:shadow-xl transition duration-300">
               <p className="text-gray-600 italic mb-4">
                 “Shopping with coins is so fun! I got a new toy with my chores.”
               </p>
-              <p className="font-semibold text-blue-900">— Emma, Age 8</p>
+              <p className="font-semibold text-colour-3">— Ailfrid, Age 11</p>
               <div className="flex justify-center mt-2">
                 {[...Array(5)].map((_, i) => (
                   <svg key={i} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
@@ -143,16 +152,14 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          <p className="text-center text-gray-600 mt-8">
-            Join over 10,000 families making chores fun and educational!
-          </p>
+
         </div>
       </section>
 
       {/* Education/Inspiration Section */}
-      <section className="py-16 bg-blue-50">
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-blue-900 mb-12">
+          <h2 className="text-3xl font-bold text-colour-3 mb-12">
             Inspire Your Kids to Learn & Grow
           </h2>
           <div className="flex flex-col md:flex-row items-center justify-center gap-8">
@@ -170,9 +177,9 @@ export default function HomePage() {
               </p>
               <Link
                 href="/resources"
-                className="text-blue-600 font-semibold hover:underline"
+                className="btn-2 py-3 px-6 rounded-full font-semibold transition duration-300 inline-block"
               >
-                Download Free Chore Ideas & Financial Tips
+                📚 Free Resources
               </Link>
             </div>
           </div>
@@ -180,20 +187,28 @@ export default function HomePage() {
       </section>
 
       {/* Footer CTA Section */}
-      <section className="bg-green-400 text-white py-12">
+      <section className="background-colour-1 text-white py-16">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">
-            Start Your Family’s Adventure Today!
+          <h2 className="text-4xl font-bold mb-6">
+            Start Your Family's Adventure Today!
           </h2>
-          <p className="text-lg mb-8">
-            Sign up free and get 50 bonus coins to kickstart your kids’ journey.
+          <p className="text-xl mb-10">
+            Sign up free and get 50 bonus coins to kickstart your kids' journey.
           </p>
-          <Link
-            href="/register"
-            className="bg-yellow-400 text-blue-900 font-semibold py-3 px-6 rounded-full hover:bg-yellow-300 transition duration-300"
-          >
-            Get Started Now
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+            <Link
+              href="/register"
+              className="btn-2 py-4 px-8 rounded-full text-lg font-bold transition duration-300 inline-block"
+            >
+              🎉 Get Started Now
+            </Link>
+            <Link
+              href="/login"
+              className="btn-3 py-4 px-8 rounded-full text-lg font-bold transition duration-300 inline-block"
+            >
+              🔑 Already a Member?
+            </Link>
+          </div>
           <div className="mt-8 text-sm">
             <p>Follow us: 
               <a href="#" className="text-white underline mx-2">Facebook</a>

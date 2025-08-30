@@ -73,7 +73,11 @@ export default function LogsPage() {
   };
 
   if (isAuthenticated === null) {
-    return <div className="flex items-center justify-center min-h-screen text-gray-600">Loading authentication...</div>;
+    return (
+      <div className="min-h-screen main-bg flex items-center justify-center">
+        <div className="text-colour-1 text-lg font-medium">🔄 Loading authentication...</div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
@@ -81,97 +85,152 @@ export default function LogsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 bg-white shadow-md rounded-md overflow-x-auto">
-      <div className="mb-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Activity Logs</h1>
-          
-          {logs.length > 0 && editMode  && (
-            <button
-              onClick={handleEmptyAllLogs}
-              disabled={isDeleting}
-              className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-                isDeleting
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-red-500 hover:bg-red-600 text-white hover:shadow-md'
-              }`}
-            >
-              {isDeleting ? ' Deleting...' : 'Empty All Logs'}
-            </button>
-          )}
+    <div className="min-h-screen main-bg py-8 px-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-colour-3 mb-2">📋 Activity Logs</h1>
+          <p className="text-gray-600 text-lg">Track all your coin transactions and balance changes</p>
         </div>
-        
 
-      </div>
-  
-      {error && <p className="text-red-600 mb-4">{error}</p>}
-      <div className="">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {logs.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                  <div className="text-4xl mb-2">📋</div>
-                  <p>No activity logs yet!</p>
-                  <p className="text-sm">Complete some todos or activities to see your progress here.</p>
-                </td>
-              </tr>
-            ) : (
-              logs.map((log) => (
-                <tr key={log.logId}>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
-                    {new Date(log.timestamp).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm">
-                    {(() => {
-                      // Determine type from balance change
-                      const balanceChange = (log.balanceAfter ?? 0) - (log.balanceBefore ?? 0);
-                      const isPositive = balanceChange >= 0;
-                      const type = isPositive ? 'earn' : 'lose';
-                      
-                      return (
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          isPositive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                          {type}
-                        </span>
-                      );
-                    })()}
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
-                    {(() => {
-                      // Calculate amount from balance change
-                      const balanceChange = (log.balanceAfter ?? 0) - (log.balanceBefore ?? 0);
-                      const amount = Math.abs(balanceChange);
-                      const isPositive = balanceChange >= 0;
-                      
-                      return (
-                        <span className={isPositive ? 'text-green-600' : 'text-red-600'}>
-                          {isPositive ? '+' : '-'}${amount.toFixed(2)}
-                        </span>
-                      );
-                    })()}
-                  </td>
-                  <td className="px-4 py-2 text-sm text-gray-700">
-                    {log.reason || log.note || '-'}
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                    {log.source || '-'}
-                  </td>
-                </tr>
-              ))
+        {/* Actions Bar */}
+        <div className="bg-white rounded-2xl shadow-lg border-2 border-colour-1 p-6 mb-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <div className="text-colour-1">
+                <span className="text-sm font-medium">Total Entries:</span>
+                <span className="ml-2 font-bold text-lg">{logs.length}</span>
+              </div>
+            </div>
+            
+            {logs.length > 0 && editMode && (
+              <button
+                onClick={handleEmptyAllLogs}
+                disabled={isDeleting}
+                className={`transition duration-300 ${
+                  isDeleting
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed py-3 px-6 rounded-xl'
+                    : 'btn-2 py-3 px-6 rounded-xl font-semibold hover:scale-105'
+                }`}
+              >
+                {isDeleting ? '🗑️ Deleting...' : '🗑️ Empty All Logs'}
+              </button>
             )}
-          </tbody>
-        </table>
+          </div>
+        </div>
+
+        {/* Alert Messages */}
+        {error && (
+          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
+            <p className="text-red-600 font-medium">🚫 {error}</p>
+          </div>
+        )}
+        {/* Logs Table */}
+        <div className="bg-white rounded-2xl shadow-lg border-2 border-colour-3 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="background-colour-3">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">📅 Date & Time</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">🏷️ Type</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">💰 Amount</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">📊 Before</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">📈 After</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">📝 Reason</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {logs.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-16 text-center">
+                      <div className="text-6xl mb-4">📋</div>
+                      <h3 className="text-xl font-bold text-colour-2 mb-2">No activity logs yet!</h3>
+                      <p className="text-gray-500">Complete some todos or activities to see your progress here.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  logs.map((log, index) => (
+                    <tr key={log.logId} className={`hover:bg-gray-50 transition duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <div className="font-medium">{new Date(log.timestamp).toLocaleDateString()}</div>
+                        <div className="text-xs text-gray-500">{new Date(log.timestamp).toLocaleTimeString()}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {(() => {
+                          // Determine type from balance change or amount field
+                          let balanceChange = 0;
+                          let isPositive = true;
+                          
+                          if (log.balanceAfter != null && log.balanceBefore != null) {
+                            // Use balance change if available
+                            balanceChange = log.balanceAfter - log.balanceBefore;
+                            isPositive = balanceChange >= 0;
+                          } else if (log.amount != null) {
+                            // Fall back to amount field
+                            balanceChange = log.amount;
+                            isPositive = log.amount >= 0;
+                          } else {
+                            // Use type field if available
+                            isPositive = log.type !== 'lose';
+                          }
+                          
+                          const type = isPositive ? 'EARN' : 'LOSE';
+                          
+                          return (
+                            <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full ${
+                              isPositive ? 'background-colour-1 text-white' : 'background-colour-2 text-white'
+                            }`}>
+                              {isPositive ? '🪙' : '💸'} {type}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold">
+                        {(() => {
+                          // Calculate amount from balance change or use amount field
+                          let amount = 0;
+                          let isPositive = true;
+                          
+                          if (log.balanceAfter != null && log.balanceBefore != null) {
+                            // Use balance change if available
+                            const balanceChange = log.balanceAfter - log.balanceBefore;
+                            amount = Math.abs(balanceChange);
+                            isPositive = balanceChange >= 0;
+                          } else if (log.amount != null) {
+                            // Fall back to amount field
+                            amount = Math.abs(log.amount);
+                            isPositive = log.amount >= 0;
+                          }
+                          
+                          return (
+                            <span className={isPositive ? 'text-green-600' : 'text-red-600'}>
+                              {isPositive ? '+' : '-'}${amount.toFixed(2)}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <span className="font-mono">
+                          ${log.balanceBefore != null ? log.balanceBefore.toFixed(2) : '-'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <span className="font-mono font-bold text-colour-1">
+                          ${log.balanceAfter != null ? log.balanceAfter.toFixed(2) : '-'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        <div className="max-w-xs truncate" title={log.reason || log.note || '-'}>
+                          {log.reason || log.note || '-'}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );

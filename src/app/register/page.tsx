@@ -50,65 +50,104 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-md">
-      <h1 className="text-2xl font-bold mb-4">Register</h1>
-      <form onSubmit={handleRegister} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium">Username</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="mt-1 p-2 border w-full rounded"
-            required
-          />
+    <div className="min-h-screen main-bg flex items-center justify-center py-12 px-4">
+      <div className="max-w-md w-full">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-block mb-6">
+            <img src="/betterlogo.png?v=1" alt="Better Kid Logo" className="w-32 mx-auto" />
+          </Link>
+          <h1 className="text-3xl font-bold text-colour-2 mb-2">Join Better Kid!</h1>
+          <p className="text-gray-600">Create your family account and start earning coins</p>
         </div>
-        <div>
-          <label className="block text-sm font-medium">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 p-2 border w-full rounded"
-            required
-          />
+
+        {/* Registration Form */}
+        <div className="bg-white rounded-2xl shadow-lg border-2 border-colour-1 p-8">
+          <form onSubmit={handleRegister} className="space-y-6">
+            <div>
+              <label className="block text-sm font-semibold text-colour-2 mb-2">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-colour-2 focus:outline-none transition duration-300"
+                placeholder="Choose a fun username"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-colour-2 mb-2">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-colour-2 focus:outline-none transition duration-300"
+                placeholder="Enter your email address"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-colour-2 mb-2">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-colour-2 focus:outline-none transition duration-300"
+                placeholder="Create a secure password"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-colour-2 mb-2">Parent Code</label>
+              <input
+                type="text"
+                value={parentCode}
+                onChange={(e) => setParentCode(e.target.value)}
+                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-colour-2 focus:outline-none transition duration-300"
+                placeholder="Enter your parent code"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">Ask your parent for the special code</p>
+            </div>
+            
+            {error && (
+              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
+                <p className="text-red-600 text-sm font-medium">🚫 {error}</p>
+              </div>
+            )}
+
+            {success && (
+              <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
+                <p className="text-green-600 text-sm font-medium">🎉 {success}</p>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-2 w-full py-4 rounded-xl text-lg font-bold transition duration-300 disabled:opacity-50"
+            >
+              {loading ? '🔄 Creating Account...' : '✨ Create My Account'}
+            </button>
+          </form>
+          
+          <div className="mt-6 text-center">
+            <p className="text-gray-600">
+              Already have an account?{' '}
+              <Link href="/login" className="btn-3 py-2 px-4 rounded-full font-semibold transition duration-300 inline-block">
+                Login here
+              </Link>
+            </p>
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 p-2 border w-full rounded"
-            required
-          />
+
+        {/* Back to Home */}
+        <div className="text-center mt-6">
+          <Link href="/" className="text-colour-2 hover:text-colour-1 font-medium transition duration-300">
+            ← Back to Home
+          </Link>
         </div>
-        <div>
-          <label className="block text-sm font-medium">Parent Code</label>
-          <input
-            type="text"
-            value={parentCode}
-            onChange={(e) => setParentCode(e.target.value)}
-            className="mt-1 p-2 border w-full rounded"
-            required
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-blue-500 text-white px-4 py-2 rounded disabled:bg-gray-400 w-full"
-        >
-          {loading ? 'Registering...' : 'Register'}
-        </button>
-      </form>
-      {error && <p className="text-red-500 mt-4">{error}</p>}
-      {success && <p className="text-green-500 mt-4">{success}</p>}
-      <p className="mt-4 text-center">
-        Already have an account?{' '}
-        <Link href="/login" className="text-blue-500 hover:underline">
-          Login here
-        </Link>
-      </p>
+      </div>
     </div>
   );
 }

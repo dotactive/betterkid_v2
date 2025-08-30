@@ -34,44 +34,75 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-md">
-      <h1 className="text-2xl font-bold mb-4">Login</h1>
-      <form onSubmit={handleLogin} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium">Email/Username</label>
-          <input
-            type="text"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 p-2 border w-full rounded"
-            required
-          />
+    <div className="min-h-screen main-bg flex items-center justify-center py-12 px-4">
+      <div className="max-w-md w-full">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <Link href="/" className="inline-block mb-6">
+            <img src="/betterlogo.png?v=1" alt="Better Kid Logo" className="w-40 mx-auto" />
+          </Link>
+          <h1 className="text-3xl font-bold text-colour-1 mb-2">Welcome Back!</h1>
+
         </div>
-        <div>
-          <label className="block text-sm font-medium">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 p-2 border w-full rounded"
-            required
-          />
+
+        {/* Login Form */}
+        <div className="bg-white rounded-2xl shadow-lg border-2 border-colour-1 p-8">
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div>
+              <label className="block text-sm font-semibold text-colour-1 mb-2 hidden ">Email/Username</label>
+              <input
+                type="text"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-4 border-2 border-colour-3 rounded-xl focus:border-colour-3 focus:outline-none transition duration-300"
+                placeholder="Enter your email or username"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-colour-1 mb-2 hidden ">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-4 border-2 border-colour-3 rounded-xl focus:border-colour-3 focus:outline-none transition duration-300"
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+            
+            {error && (
+              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
+                <p className="text-red-600 text-sm font-medium">🚫 {error}</p>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-1 w-full py-4 rounded-xl text-lg font-bold transition duration-300 disabled:opacity-50"
+            >
+              {loading ? '🔄 Logging in...' : '🚀 Login'}
+            </button>
+          </form>
+          
+          <div className="mt-6 text-center">
+            <p className="text-gray-600">
+              Don't have an account?{' '}
+              <Link href="/register" className="btn-2 py-2 px-4 rounded-full font-semibold transition duration-300 inline-block">
+                Register here
+              </Link>
+            </p>
+          </div>
         </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-blue-500 text-white px-4 py-2 rounded disabled:bg-gray-400 w-full"
-        >
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-      </form>
-      {error && <p className="text-red-500 mt-4">{error}</p>}
-      <p className="mt-4 text-center">
-        Don't have an account?{' '}
-        <Link href="/register" className="text-blue-500 hover:underline">
-          Register here
-        </Link>
-      </p>
+
+        {/* Back to Home */}
+        <div className="text-center mt-6">
+          <Link href="/" className="text-colour-3 hover:text-colour-1 font-medium transition duration-300">
+            ← Back to Home
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 :root {
   --background: #ebf6d6;
   --foreground: #171717;
+  --pr-colour:#27b3db;
   --better-colour-1:#aadb4d;
   --better-h-colour-1:#d0f589;
   --better-colour-2:#ff72b8;
@@ -27,10 +28,14 @@
 
 body {
   
-  color: var(--foreground);
+  color: var(--pr-colour);
   font-family: Arial, Helvetica, sans-serif;
 }
 .main-bg{background: var(--background);}
+.pr-bg{background: var(--pr-colour);}
+.pr-colour{color: var(--pr-colour);}
+.btn-pr{  color: #fff;  background-color: var(--pr-colour);border:solid 2px var(--pr-colour);}
+.btn-pr:hover{background-color: #fff; color:var(--pr-colour); border:solid 2px var(--pr-colour);}
 .btn-1{  color: #fff;  background-color: var(--better-colour-1);border:solid 2px #fff;}
 .btn-1:hover{background-color: #fff; color:var(--better-colour-1); border:solid 2px var(--better-colour-1);}
 .btn-2{  color: #fff;  background-color: var(--better-colour-2);border:solid 2px #fff;}
@@ -45,6 +50,7 @@ body {
 .background-colour-1{background-color:var(--better-colour-1); }
 .background-colour-2{background-color:var(--better-colour-2); }
 .background-colour-3{background-color:var(--better-colour-3); }
+
 
 .border-colour-1{border-color:var(--better-colour-1); }
 .border-colour-2{border-color:var(--better-colour-2); }
