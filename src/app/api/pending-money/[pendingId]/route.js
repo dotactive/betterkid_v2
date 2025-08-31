@@ -204,7 +204,7 @@ export async function POST(request, context) {
           ':sk': 'ACCOUNT#balance',
         },
       }));
-      let currentBalance = currentBalanceData.Items?.[0]?.balance || 0;
+      let runningBalance = currentBalanceData.Items?.[0]?.balance || 0;
       
       for (const item of pendingItems) {
         const itemAmount = item.amount || 0;
@@ -216,8 +216,8 @@ export async function POST(request, context) {
           
           // Add to balance log with proper balance tracking
           const logId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-          const balanceBefore = currentBalance;
-          const balanceAfter = currentBalance + itemAmount;
+          const balanceBefore = runningBalance;
+          const balanceAfter = runningBalance + itemAmount;
           
           const logParams = {
             TableName: 'betterkid_v2',
@@ -240,7 +240,7 @@ export async function POST(request, context) {
             await dynamoDb.send(new PutCommand(logParams));
             console.log(`Logged activity approval: ${item.reason} (${itemAmount >= 0 ? '+' : ''}${itemAmount})`);
             logEntries.push(`${item.reason} (${itemAmount >= 0 ? '+' : ''}$${Math.abs(itemAmount)})`);
-            currentBalance = balanceAfter; // Update running balance
+            runningBalance = balanceAfter; // Update running balance
           } catch (error) {
             console.error(`Failed to log activity approval ${item.referenceId}:`, error);
             // Continue with approval even if logging fails
@@ -293,8 +293,8 @@ export async function POST(request, context) {
             
             // Add to balance log with proper balance tracking
             const logId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            const balanceBefore = currentBalance;
-            const balanceAfter = currentBalance + itemAmount;
+            const balanceBefore = runningBalance;
+            const balanceAfter = runningBalance + itemAmount;
             
             const logParams = {
               TableName: 'betterkid_v2',
@@ -314,7 +314,7 @@ export async function POST(request, context) {
             };
             await dynamoDb.send(new PutCommand(logParams));
             logEntries.push(`${item.reason} (+$${itemAmount})`);
-            currentBalance = balanceAfter; // Update running balance
+            runningBalance = balanceAfter; // Update running balance
           } catch (error) {
             console.error(`Failed to update todo ${item.referenceId}:`, error);
             // Continue with other items even if one fails
@@ -333,26 +333,6 @@ export async function POST(request, context) {
       }
       
       if (totalAmount > 0) {
-        // Check user settings to see if complete awards are enabled
-        const userSettingsData = await dynamoDb.send(new QueryCommand({
-          TableName: 'betterkid_v2',
-          KeyConditionExpression: 'partitionKey = :pk AND sortKey = :sk',
-          ExpressionAttributeValues: {
-            ':pk': `USER#${userId}`,
-            ':sk': 'METADATA',
-          },
-        }));
-        
-        const userSettings = userSettingsData.Items?.[0];
-        const completeAwardEnabled = userSettings?.completeAwardEnabled || false;
-        
-        if (!completeAwardEnabled) {
-          return NextResponse.json({ 
-            message: 'Complete awards are disabled. No money was added to balance.',
-            totalAmount: 0,
-            logEntries: logEntries
-          });
-        }
 
         // Add to user balance
         const balanceParams = {
@@ -363,18 +343,8 @@ export async function POST(request, context) {
           },
         };
         
-        // Get current balance
-        const balanceData = await dynamoDb.send(new QueryCommand({
-          TableName: 'betterkid_v2',
-          KeyConditionExpression: 'partitionKey = :pk AND sortKey = :sk',
-          ExpressionAttributeValues: {
-            ':pk': `USER#${userId}`,
-            ':sk': 'ACCOUNT#balance',
-          },
-        }));
-        
-        const currentBalanceForUpdate = balanceData.Items?.[0]?.balance || 0;
-        const newBalance = currentBalanceForUpdate + totalAmount;
+        // Use the updated running balance from our calculations above
+        const newBalance = runningBalance;
         
         // Update balance
         const updateParams = {
@@ -422,7 +392,7 @@ export async function POST(request, context) {
           ':sk': 'ACCOUNT#balance',
         },
       }));
-      const currentBalance = currentBalanceData.Items?.[0]?.balance || 0;
+      let runningBalance = currentBalanceData.Items?.[0]?.balance || 0;
       
       // If this is an activity item, reset the pending quantity and log it
       if (pending.type === 'activity' && pending.referenceId) {
@@ -430,8 +400,9 @@ export async function POST(request, context) {
         
         // Add to balance log with proper balance tracking
         const logId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        const balanceBefore = currentBalance;
-        const balanceAfter = currentBalance + amount;
+        const balanceBefore = runningBalance;
+        const balanceAfter = runningBalance + amount;
+        runningBalance = balanceAfter; // Update running balance
         
         const logParams = {
           TableName: 'betterkid_v2',
@@ -505,8 +476,9 @@ export async function POST(request, context) {
           
           // Add to balance log with proper balance tracking
           const logId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-          const balanceBefore = currentBalance;
-          const balanceAfter = currentBalance + amount;
+          const balanceBefore = runningBalance;
+          const balanceAfter = runningBalance + amount;
+          runningBalance = balanceAfter; // Update running balance
           
           const logParams = {
             TableName: 'betterkid_v2',
@@ -541,38 +513,9 @@ export async function POST(request, context) {
       };
       await dynamoDb.send(new DeleteCommand(deleteParams));
       
-      // Check user settings to see if complete awards are enabled
-      const userSettingsData = await dynamoDb.send(new QueryCommand({
-        TableName: 'betterkid_v2',
-        KeyConditionExpression: 'partitionKey = :pk AND sortKey = :sk',
-        ExpressionAttributeValues: {
-          ':pk': `USER#${userId}`,
-          ':sk': 'METADATA',
-        },
-      }));
       
-      const userSettings = userSettingsData.Items?.[0];
-      const completeAwardEnabled = userSettings?.completeAwardEnabled || false;
-      
-      if (!completeAwardEnabled) {
-        return NextResponse.json({ 
-          message: 'Complete awards are disabled. No money was added to balance.',
-          amount: 0
-        });
-      }
-      
-      // Add to user balance
-      const finalBalanceData = await dynamoDb.send(new QueryCommand({
-        TableName: 'betterkid_v2',
-        KeyConditionExpression: 'partitionKey = :pk AND sortKey = :sk',
-        ExpressionAttributeValues: {
-          ':pk': `USER#${userId}`,
-          ':sk': 'ACCOUNT#balance',
-        },
-      }));
-      
-      const finalCurrentBalance = finalBalanceData.Items?.[0]?.balance || 0;
-      const newBalance = finalCurrentBalance + amount;
+      // Use the running balance that has been updated through the approval process
+      const newBalance = runningBalance;
       
       const updateParams = {
         TableName: 'betterkid_v2',

@@ -7,7 +7,7 @@ import { EditModeProvider, useEditMode } from '@/hooks/useEditMode';
 import { PendingMoneyProvider, usePendingMoney } from '@/hooks/usePendingMoney';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
 const geistSans = Geist({
@@ -156,6 +156,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const [showParentCodeModal, setShowParentCodeModal] = useState(false);
   const [parentCodeInput, setParentCodeInput] = useState('');
   const [userParentCode, setUserParentCode] = useState('');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
 
   
@@ -170,6 +172,22 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       fetchUserParentCode();
     }
   }, [isAuthenticated, userId]);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    if (isMobileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [isMobileMenuOpen]);
 
   const fetchBalance = async () => {
     if (!userId) return;
@@ -254,66 +272,199 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 }`}
                 >
         {/* Top section with logo and controls */}
-        <div className=" py-4 flex flex-col md:flex-row justify-between items-center max-w-4xl mx-auto">
-          <div className="text-center md:text-left">
-            <img src="/betterlogo.png?v=1" alt="Logo" className="w-40" />
-          </div>
-          
-          {/* Control buttons */}
-          <div className=" mt-4 md:mt-0 ">
-            <div className="flex flex-col  md:flex-row mt-5 gap-3 items-center justify-end ">
-
-              <button
-                onClick={handleEditModeToggle}
-                className="px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer  btn-1"
-              >
-                {editMode ? 'Exit Edit Mode' : 'Edit Mode'}
-              </button>
-              {editMode  &&
-              <Link href="/settings" className="btn-3 px-4 py-2 rounded-lg font-medium transition-colors  cursor-pointer">Settings</Link>
-                }
-            <button 
-              onClick={handleLogout} 
-              className="btn-2 px-4 py-2 rounded-lg font-medium transition-colors  cursor-pointer"
-            >
-              Log Out
-            </button>
+        <div className="py-4 max-w-4xl mx-auto">
+          {/* Mobile header */}
+          <div className="flex md:hidden justify-between items-center px-4">
+            <div>
+              <img src="/betterlogo.png?v=1" alt="Logo" className="w-40" />
             </div>
-
-            <nav className=" text-white-900 py-0 px-0 mt-5">
-          <div className="flex justify-center gap-6 font-medium">
-
-                <Link href="/behaviors" className="btn-pr transition-colors px-3 py-2 rounded-md ">
-                  Behaviors
-                </Link>
-                <Link href="/activities" className="btn-pr transition-colors px-3 py-2 rounded-md ">
-                  Activities
-                </Link>
-                <Link href="/todolist" className="btn-pr transition-colors px-3 py-2 rounded-md ">
-                  Todo List
-                </Link>
-                <Link href="/spend" className="btn-pr transition-colors px-3 py-2 rounded-md ">
-                  Spend Coins
-                </Link>
-                <Link href="/logs" className="btn-pr transition-colors px-3 py-2 rounded-md ">
-                  Logs
-                </Link>
-
-
-
-    
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors z-50 relative"
+              aria-label="Toggle menu"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
           </div>
-        </nav>
 
+          {/* Desktop layout */}
+          <div className="hidden md:flex flex-row justify-between items-center">
+            <div className="text-left">
+              <img src="/betterlogo.png?v=1" alt="Logo" className="w-40" />
+            </div>
+            
+            <div className="mt-0">
+              <div className="flex flex-row mt-5 gap-3 items-center justify-end">
+                <button
+                  onClick={handleEditModeToggle}
+                  className="px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer btn-1"
+                >
+                  {editMode ? 'Exit Edit Mode' : 'Edit Mode'}
+                </button>
+                {editMode && (
+                  <Link href="/settings" className="btn-3 px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer">
+                    Settings
+                  </Link>
+                )}
+                <button 
+                  onClick={handleLogout} 
+                  className="btn-2 px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer"
+                >
+                  Log Out
+                </button>
+              </div>
+
+              {/* Desktop navigation */}
+              <nav className="text-white-900 py-0 px-0 mt-5">
+                <div className="flex justify-center gap-6 font-medium">
+                  <Link href="/behaviors" className="btn-pr transition-colors px-3 py-2 rounded-md">
+                    Behaviors
+                  </Link>
+                  <Link href="/activities" className="btn-pr transition-colors px-3 py-2 rounded-md">
+                    Activities
+                  </Link>
+                  <Link href="/todolist" className="btn-pr transition-colors px-3 py-2 rounded-md">
+                    Todo List
+                  </Link>
+                  <Link href="/spend" className="btn-pr transition-colors px-3 py-2 rounded-md">
+                    Spend Coins
+                  </Link>
+                  <Link href="/logs" className="btn-pr transition-colors px-3 py-2 rounded-md">
+                    Logs
+                  </Link>
+                </div>
+              </nav>
+            </div>
           </div>
-            {/* Navigation */}
-        
         </div>
 
 
 
       
       </header>
+
+      {/* Mobile sliding menu overlay */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-40 bg-black/50" onClick={() => setIsMobileMenuOpen(false)} />
+      )}
+
+      {/* Mobile sliding menu */}
+      <div
+        ref={mobileMenuRef}
+        className={`md:hidden fixed top-0 right-0 h-full w-[90%] bg-white shadow-2xl transform transition-transform duration-300 ease-in-out z-50 ${
+          isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="flex flex-col h-full">
+          {/* Menu header */}
+
+
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-white"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+
+          {/* Balance cards */}
+          
+
+          {/* Navigation links */}
+          <div className="flex-1 overflow-y-auto">
+            <nav className="p-6">
+              <div className="space-y-2">
+                <Link 
+                  href="/behaviors" 
+                  className="flex items-center w-full text-left p-4 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors font-medium text-lg"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  
+                  Behaviors
+                </Link>
+                <Link 
+                  href="/activities" 
+                  className="flex items-center w-full text-left p-4 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors font-medium text-lg"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  
+                  Activities
+                </Link>
+                <Link 
+                  href="/todolist" 
+                  className="flex items-center w-full text-left p-4 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors font-medium text-lg"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  
+                  Todo List
+                </Link>
+                <Link 
+                  href="/spend" 
+                  className="flex items-center w-full text-left p-4 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors font-medium text-lg"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  
+                  Spend Coins
+                </Link>
+                <Link 
+                  href="/logs" 
+                  className="flex items-center w-full text-left p-4 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors font-medium text-lg"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  
+                  Logs
+                </Link>
+              </div>
+            </nav>
+          </div>
+
+          {/* Menu footer with controls */}
+          <div className="p-6 border-t bg-gray-50">
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  handleEditModeToggle();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center w-full text-left p-4 text-gray-700 hover:bg-gray-200 rounded-xl transition-colors font-medium text-lg"
+              >
+                <span className="mr-3 text-2xl">⚙️</span>
+                {editMode ? 'Exit Edit Mode' : 'Edit Mode'}
+              </button>
+              
+              {editMode && (
+                <Link 
+                  href="/settings" 
+                  className="flex items-center w-full text-left p-4 text-gray-700 hover:bg-gray-200 rounded-xl transition-colors font-medium text-lg"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <span className="mr-3 text-2xl">🔧</span>
+                  Settings
+                </Link>
+              )}
+              
+              <button 
+                onClick={() => {
+                  handleLogout();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center w-full text-left p-4 text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium text-lg"
+              >
+                <span className="mr-3 text-2xl">🚪</span>
+                Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
               {/* Welcome and coins section */}
               <div className="px-6 py-4 border-t  ">

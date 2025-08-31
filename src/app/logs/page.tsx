@@ -85,25 +85,16 @@ export default function LogsPage() {
   }
 
   return (
-    <div className="min-h-screen main-bg py-8 px-4">
+    <div className="min-h-screen">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-colour-3 mb-2">📋 Activity Logs</h1>
-          <p className="text-gray-600 text-lg">Track all your coin transactions and balance changes</p>
+        <div className="text-center mb-8  hidden">
+          <h1 className="text-4xl font-bold text-colour-3 mb-2 ">Activity Logs</h1>
+
         </div>
 
-        {/* Actions Bar */}
-        <div className="bg-white rounded-2xl shadow-lg border-2 border-colour-1 p-6 mb-6">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <div className="text-colour-1">
-                <span className="text-sm font-medium">Total Entries:</span>
-                <span className="ml-2 font-bold text-lg">{logs.length}</span>
-              </div>
-            </div>
-            
-            {logs.length > 0 && editMode && (
+
+        {logs.length > 0 && editMode && (
               <button
                 onClick={handleEmptyAllLogs}
                 disabled={isDeleting}
@@ -116,9 +107,6 @@ export default function LogsPage() {
                 {isDeleting ? '🗑️ Deleting...' : '🗑️ Empty All Logs'}
               </button>
             )}
-          </div>
-        </div>
-
         {/* Alert Messages */}
         {error && (
           <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
@@ -131,12 +119,12 @@ export default function LogsPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="background-colour-3">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-white">📅 Date & Time</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-white">🏷️ Type</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-white">💰 Amount</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-white">📊 Before</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-white">📈 After</th>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-white">📝 Reason</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">Date & Time</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">Type</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">Amount</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">Before</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">After</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">Reason</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
@@ -180,7 +168,7 @@ export default function LogsPage() {
                             <span className={`inline-flex px-3 py-1 text-xs font-bold rounded-full ${
                               isPositive ? 'background-colour-1 text-white' : 'background-colour-2 text-white'
                             }`}>
-                              {isPositive ? '🪙' : '💸'} {type}
+                              {type}
                             </span>
                           );
                         })()}
@@ -220,7 +208,7 @@ export default function LogsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-700">
-                        <div className="max-w-xs truncate" title={log.reason || log.note || '-'}>
+                        <div className="max-w-xs" title={log.reason || log.note || '-'}>
                           {log.reason || log.note || '-'}
                         </div>
                       </td>
