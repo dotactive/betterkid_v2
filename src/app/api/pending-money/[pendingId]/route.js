@@ -373,8 +373,8 @@ export async function POST(request, context) {
           },
         }));
         
-        const currentBalance = balanceData.Items?.[0]?.balance || 0;
-        const newBalance = currentBalance + totalAmount;
+        const currentBalanceForUpdate = balanceData.Items?.[0]?.balance || 0;
+        const newBalance = currentBalanceForUpdate + totalAmount;
         
         // Update balance
         const updateParams = {
@@ -562,7 +562,7 @@ export async function POST(request, context) {
       }
       
       // Add to user balance
-      const balanceData = await dynamoDb.send(new QueryCommand({
+      const finalBalanceData = await dynamoDb.send(new QueryCommand({
         TableName: 'betterkid_v2',
         KeyConditionExpression: 'partitionKey = :pk AND sortKey = :sk',
         ExpressionAttributeValues: {
@@ -571,8 +571,8 @@ export async function POST(request, context) {
         },
       }));
       
-      const currentBalance = balanceData.Items?.[0]?.balance || 0;
-      const newBalance = currentBalance + amount;
+      const finalCurrentBalance = finalBalanceData.Items?.[0]?.balance || 0;
+      const newBalance = finalCurrentBalance + amount;
       
       const updateParams = {
         TableName: 'betterkid_v2',
