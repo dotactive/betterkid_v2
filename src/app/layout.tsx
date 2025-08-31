@@ -362,91 +362,81 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         }`}
       >
         <div className="flex flex-col h-full">
-          {/* Menu header */}
+          {/* Menu header with close button */}
+          <div className="flex justify-between items-center p-6 border-b">
+            <h2 className="text-xl font-bold text-gray-800">Menu</h2>
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
 
-
-              <button
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-white"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-
-
-          {/* Balance cards */}
-          
-
-          {/* Navigation links */}
+          {/* Navigation links only */}
           <div className="flex-1 overflow-y-auto">
             <nav className="p-6">
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Link 
                   href="/behaviors" 
-                  className="flex items-center w-full text-left p-4 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors font-medium text-lg"
+                  className="block w-full text-left p-4 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium text-lg"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  
                   Behaviors
                 </Link>
                 <Link 
                   href="/activities" 
-                  className="flex items-center w-full text-left p-4 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors font-medium text-lg"
+                  className="block w-full text-left p-4 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium text-lg"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  
                   Activities
                 </Link>
                 <Link 
                   href="/todolist" 
-                  className="flex items-center w-full text-left p-4 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors font-medium text-lg"
+                  className="block w-full text-left p-4 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium text-lg"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  
                   Todo List
                 </Link>
                 <Link 
                   href="/spend" 
-                  className="flex items-center w-full text-left p-4 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors font-medium text-lg"
+                  className="block w-full text-left p-4 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium text-lg"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  
                   Spend Coins
                 </Link>
                 <Link 
                   href="/logs" 
-                  className="flex items-center w-full text-left p-4 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors font-medium text-lg"
+                  className="block w-full text-left p-4 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium text-lg"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  
                   Logs
                 </Link>
               </div>
             </nav>
           </div>
 
-          {/* Menu footer with controls */}
+          {/* Simple footer with essential controls */}
           <div className="p-6 border-t bg-gray-50">
-            <div className="space-y-3">
+            <div className="space-y-2">
               <button
                 onClick={() => {
                   handleEditModeToggle();
                   setIsMobileMenuOpen(false);
                 }}
-                className="flex items-center w-full text-left p-4 text-gray-700 hover:bg-gray-200 rounded-xl transition-colors font-medium text-lg"
+                className="block w-full text-left p-3 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors font-medium"
               >
-                <span className="mr-3 text-2xl">⚙️</span>
                 {editMode ? 'Exit Edit Mode' : 'Edit Mode'}
               </button>
               
               {editMode && (
                 <Link 
                   href="/settings" 
-                  className="flex items-center w-full text-left p-4 text-gray-700 hover:bg-gray-200 rounded-xl transition-colors font-medium text-lg"
+                  className="block w-full text-left p-3 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors font-medium"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  <span className="mr-3 text-2xl">🔧</span>
                   Settings
                 </Link>
               )}
@@ -456,9 +446,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                   handleLogout();
                   setIsMobileMenuOpen(false);
                 }}
-                className="flex items-center w-full text-left p-4 text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium text-lg"
+                className="block w-full text-left p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium"
               >
-                <span className="mr-3 text-2xl">🚪</span>
                 Log Out
               </button>
             </div>
