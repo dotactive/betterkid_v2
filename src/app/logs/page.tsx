@@ -10,9 +10,6 @@ interface BalanceLog {
   balanceAfter?: number;
   amount?: number;
   reason?: string;
-  note?: string;
-  type?: string;
-  source?: string;
   timestamp: string;
 }
 
@@ -208,8 +205,8 @@ export default function LogsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-700">
-                        <div className="max-w-xs" title={log.reason || log.note || '-'}>
-                          {log.reason || log.note || '-'}
+                        <div className="max-w-xs" title={log.reason || '-'}>
+                          {log.reason || '-'}
                         </div>
                       </td>
                     </tr>

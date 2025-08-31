@@ -102,8 +102,6 @@ export async function POST(request: Request) {
         userId,
         amount: -penalty,
         reason: `Penalty for ${uncompletedTodos.length} uncompleted daily todo${uncompletedTodos.length !== 1 ? 's' : ''}`,
-        type: 'lose',
-        source: 'penalty_uncompleted_todos',
         timestamp: new Date().toISOString(),
       },
     }));

@@ -230,8 +230,6 @@ export async function POST(request, context) {
               balanceBefore: balanceBefore,
               balanceAfter: balanceAfter,
               reason: item.reason,
-              type: itemAmount >= 0 ? 'earn' : 'lose',
-              source: 'completed_activity',
               timestamp: new Date().toISOString(),
             },
           };
@@ -307,8 +305,6 @@ export async function POST(request, context) {
                 balanceBefore: balanceBefore,
                 balanceAfter: balanceAfter,
                 reason: item.reason,
-                type: 'earn',
-                source: 'completed_todo',
                 timestamp: new Date().toISOString(),
               },
             };
@@ -415,8 +411,6 @@ export async function POST(request, context) {
             balanceBefore: balanceBefore,
             balanceAfter: balanceAfter,
             reason: pending.reason,
-            type: amount >= 0 ? 'earn' : 'lose',
-            source: 'completed_activity',
             timestamp: new Date().toISOString(),
           },
         };
@@ -491,8 +485,6 @@ export async function POST(request, context) {
               balanceBefore: balanceBefore,
               balanceAfter: balanceAfter,
               reason: pending.reason,
-              type: 'earn',
-              source: 'completed_todo',
               timestamp: new Date().toISOString(),
             },
           };

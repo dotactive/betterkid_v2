@@ -152,7 +152,7 @@ export async function GET(request: Request) {
             amount: totalPendingMoney,
             quantity: pendingQuantity,
             timestamp: new Date().toISOString(),
-            note: `Auto-approved ${pendingQuantity} × $${moneyPerActivity} = $${totalPendingMoney} via daily cron job`,
+            reason: `Auto-approved ${pendingQuantity} × $${moneyPerActivity} = $${totalPendingMoney} via daily cron job`,
           };
 
           await dynamoDb.send(new PutCommand({

@@ -12,7 +12,7 @@ export default function EditCoinsPage() {
   const [balance, setBalance] = useState<number>(0);
   const [changes, setChanges] = useState<number>(0);
   const [inputAmount, setInputAmount] = useState('');
-  const [note, setNote] = useState('');
+  const [reason, setReason] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -45,7 +45,7 @@ export default function EditCoinsPage() {
   const handleButtonClick = (amount: number) => {
     setChanges((prev) => parseFloat((prev + amount).toFixed(2)));
     setInputAmount('');
-    setNote('');
+    setReason('');
     setError('');
     setSuccess('');
   };
@@ -57,8 +57,8 @@ export default function EditCoinsPage() {
     setSuccess('');
   };
 
-  const handleNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setNote(e.target.value);
+  const handleReasonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setReason(e.target.value);
   };
 
   const handleSubmit = async () => {
@@ -82,17 +82,17 @@ export default function EditCoinsPage() {
     const finalBalance = parseFloat((balance + totalChanges).toFixed(2));
 
     try {
-      console.log('Updating balance for user:', userId, 'to:', finalBalance, 'with note:', note);
+      console.log('Updating balance for user:', userId, 'to:', finalBalance, 'with reason:', reason);
       const response = await axios.put('/api/user-balance', {
         userId,
         balance: finalBalance,
-        note,
+        reason,
       });
       console.log('Balance updated:', response.data);
       setBalance(response.data.balance);
       setChanges(0);
       setInputAmount('');
-      setNote('');
+      setReason('');
       setSuccess('Balance updated successfully!');
       setError('');
       
@@ -215,7 +215,7 @@ export default function EditCoinsPage() {
             </div>
           </div>
         
-          {/* Custom Amount & Notes */}
+          {/* Custom Amount & Reason */}
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-colour-3 mb-2">💰 Custom Amount</label>
@@ -230,15 +230,15 @@ export default function EditCoinsPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-colour-3 mb-2">📝 Transaction Note</label>
+              <label className="block text-sm font-semibold text-colour-3 mb-2">📝 Transaction Reason</label>
               <textarea
-                value={note}
-                onChange={handleNoteChange}
-                placeholder="Add a note explaining this transaction (optional)"
+                value={reason}
+                onChange={handleReasonChange}
+                placeholder="Add a reason explaining this transaction (optional)"
                 rows={3}
                 className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-colour-3 focus:outline-none transition duration-300 resize-none"
               />
-              <p className="text-xs text-gray-500 mt-1">This note will help track why coins were added or removed</p>
+              <p className="text-xs text-gray-500 mt-1">This reason will help track why coins were added or removed</p>
             </div>
             
             <button

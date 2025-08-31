@@ -39,8 +39,8 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { userId, balance, note }: { userId: string; balance: number; note?: string } = body;
-    console.log('PUT /api/user-balance, received:', { userId, balance, note });
+    const { userId, balance, reason }: { userId: string; balance: number; reason?: string } = body;
+    console.log('PUT /api/user-balance, received:', { userId, balance, reason });
 
     if (!userId) {
       return NextResponse.json({ error: 'UserId is required' }, { status: 400 });
@@ -82,12 +82,12 @@ export async function PUT(request: Request) {
         logId,
         balanceBefore: currentBalance,
         balanceAfter: updatedBalance,
-        note: note || null,
+        reason: reason || null,
         timestamp,
       }),
     };
     await dynamoDb.send(new PutItemCommand(logParams));
-    console.log(`Logged balance change for ${userId}: ${currentBalance} -> ${updatedBalance}, note: "${note || 'No note'}"`);
+    console.log(`Logged balance change for ${userId}: ${currentBalance} -> ${updatedBalance}, reason: "${reason || 'No reason'}"`);
     console.log(`Log entry created with ID: ${logId}`);
 
     return NextResponse.json({ message: 'Balance updated successfully', balance: updatedBalance });

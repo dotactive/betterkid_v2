@@ -438,7 +438,7 @@ export default function TodoListPage() {
                         await axios.put('/api/user-balance', {
                           userId: userId,
                           balance: currentBalance,
-                          note: `Approved: ${item.reason}`
+                          reason: `Approved: ${item.reason}`
                         });
                         
                         await axios.delete(`/api/pending-money/${item.pendingId}`, {
@@ -475,7 +475,7 @@ export default function TodoListPage() {
                         await axios.put('/api/user-balance', {
                           userId: userId,
                           balance: newBalance,
-                          note: `Daily completion bonus: All ${dailyActivities.length} activities completed (+$${completeAward})`
+                          reason: `Daily completion bonus: All ${dailyActivities.length} activities completed (+$${completeAward})`
                         });
                         awardMessage = ` Earned $${completeAward} completion bonus!`;
                       } catch (err) {
@@ -490,7 +490,7 @@ export default function TodoListPage() {
                         await axios.put('/api/user-balance', {
                           userId: userId,
                           balance: newBalance,
-                          note: `Daily incomplete fine: ${uncompletedDaily.length} activities not completed ($${uncompleteFine} per activity = $${totalFine} total)`
+                          reason: `Daily incomplete fine: ${uncompletedDaily.length} activities not completed ($${uncompleteFine} per activity = $${totalFine} total)`
                         });
                         awardMessage = ` Applied $${totalFine} incomplete fine.`;
                       } catch (err) {

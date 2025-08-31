@@ -118,8 +118,6 @@ export async function POST(request: Request) {
               userId,
               amount: amount,
               reason: `Auto-approved todo: ${todo.text}`,
-              type: 'earn',
-              source: 'auto_approved_todo',
               timestamp: new Date().toISOString(),
             },
           }));
