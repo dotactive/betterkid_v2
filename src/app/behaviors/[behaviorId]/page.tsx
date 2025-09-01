@@ -49,6 +49,7 @@ export default function BehaviorDetailPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [error, setError] = useState('');
   const [showAddActivity, setShowAddActivity] = useState(false);
+  const [addActivityForPositive, setAddActivityForPositive] = useState(true);
   const [newActivity, setNewActivity] = useState({
     name: '',
     money: 0,
@@ -119,13 +120,14 @@ export default function BehaviorDetailPage() {
         behaviorId,
         activityName: newActivity.name.trim(),
         money: newActivity.money,
-        positive: newActivity.positive,
+        positive: addActivityForPositive,
         top: newActivity.top,
         completed: newActivity.completed,
         repeat: newActivity.repeat,
       });
       setNewActivity({ name: '', money: 0, positive: true, top: false, completed: 'false', repeat: 'none' });
       setShowAddActivity(false);
+      setAddActivityForPositive(true);
       fetchActivities();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to add activity');
@@ -325,16 +327,6 @@ export default function BehaviorDetailPage() {
 
   return (
     <div>
-      {editMode && (
-        <div className="flex justify-end mb-6">
-          <button
-            onClick={() => setShowAddActivity(!showAddActivity)}
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium"
-          >
-            {showAddActivity ? 'Cancel' : 'Add Activity'}
-          </button>
-        </div>
-      )}
 
       {/* Banner Image Section */}
       {/* {(editMode || behavior.bannerImage) && (
@@ -364,11 +356,12 @@ export default function BehaviorDetailPage() {
 
       {/* <h1 className="text-2xl font-bold mb-8 text-center">{behavior.behaviorName}</h1> */}
 
-      {/* Add Activity Form */}
+      {/* Add Activity Modal */}
       {editMode && showAddActivity && (
-        <div className="bg-gray-50 p-4 rounded-lg mb-6 max-w-2xl mx-auto">
-          <h3 className="text-lg font-medium mb-3">Add New Activity</h3>
-          <div className="space-y-3">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowAddActivity(false)}>
+          <div className="bg-white p-6 rounded-lg max-w-md w-full m-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-medium mb-3">Add New Activity</h3>
+            <div className="space-y-3">
             <input
               type="text"
               value={newActivity.name}
@@ -385,14 +378,9 @@ export default function BehaviorDetailPage() {
                 placeholder="Money amount"
                 className="flex-1 p-2 border rounded"
               />
-              <select
-                value={newActivity.positive ? '+' : '-'}
-                onChange={(e) => setNewActivity({ ...newActivity, positive: e.target.value === '+' })}
-                className="p-2 border rounded"
-              >
-                <option value="+">+</option>
-                <option value="-">-</option>
-              </select>
+              <div className="p-2 border rounded bg-gray-100">
+                {addActivityForPositive ? '+' : '-'}
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <input
@@ -424,16 +412,24 @@ export default function BehaviorDetailPage() {
                 <option value="none">None</option>
                 <option value="once">Once</option>
                 <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
+
               </select>
             </div>
-            <button
-              onClick={handleAddActivity}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              Add Activity
-            </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAddActivity}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                  Add Activity
+                </button>
+                <button
+                  onClick={() => setShowAddActivity(false)}
+                  className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -524,8 +520,7 @@ export default function BehaviorDetailPage() {
                               <option value="none">None</option>
                               <option value="once">Once</option>
                               <option value="daily">Daily</option>
-                              <option value="weekly">Weekly</option>
-                              <option value="monthly">Monthly</option>
+
                             </select>
                           </div>
                           <div className="flex gap-2 pt-2">
@@ -617,6 +612,21 @@ export default function BehaviorDetailPage() {
                     )}
                   </div>
                 ))}
+                {editMode && (
+                  
+                  <div className="mt-4 ">
+                    <button
+                      onClick={() => {
+                        setAddActivityForPositive(true);
+                        setShowAddActivity(true);
+                      }}
+                      className="cursor-pointer btn-1 px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <FontAwesomeIcon icon={faPlus} />
+                      Add Good Action
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -794,6 +804,20 @@ export default function BehaviorDetailPage() {
                     )}
                   </div>
                 ))}
+                {editMode && (
+                  <div className="mt-4">
+                    <button
+                      onClick={() => {
+                        setAddActivityForPositive(false);
+                        setShowAddActivity(true);
+                      }}
+                      className="btn-2  cursor-pointer px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <FontAwesomeIcon icon={faPlus} />
+                      Add Action to Avoid
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -262,7 +262,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <div className={`min-h-screen flex flex-col  ${
       editMode 
-        ? 'bg-white' 
+        ? 'bg-gray-200' 
         : 'main-bg'
     }`}>
       <header className={`text-white ${
