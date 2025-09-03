@@ -12,6 +12,8 @@ interface User {
 }
 
 export default function AdminPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [adminPassword, setAdminPassword] = useState<string>('');
   const [users, setUsers] = useState<User[]>([]);
   const [username, setUsername] = useState<string>('');
   const [email, setEmail] = useState<string>('');
@@ -21,8 +23,10 @@ export default function AdminPage() {
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (isAuthenticated) {
+      fetchUsers();
+    }
+  }, [isAuthenticated]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -60,6 +64,24 @@ export default function AdminPage() {
     }
   };
 
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const response = await axios.post('/api/betteradmin', {
+        password: adminPassword,
+      });
+      if (response.data.success) {
+        setIsAuthenticated(true);
+        setError('');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Invalid password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDeleteUser = async (userId: string) => {
     if (!userId) {
       console.error('Cannot delete user: userId is missing');
@@ -76,6 +98,35 @@ export default function AdminPage() {
       setError(err.response?.data?.error || 'Failed to delete user');
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto p-4 max-w-md">
+        <h1 className="text-2xl font-bold mb-4">Admin Access</h1>
+        <form onSubmit={handleAdminLogin} className="mb-4">
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">Admin Password</label>
+            <input
+              type="password"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              className="w-full p-2 border rounded"
+              required
+              placeholder="Enter admin password"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-500 text-white px-4 py-2 rounded disabled:bg-gray-400"
+          >
+            {loading ? 'Authenticating...' : 'Login'}
+          </button>
+        </form>
+        {error && <p className="text-red-500">{error}</p>}
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4">
