@@ -304,7 +304,7 @@ export default function TodoListPage() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto">
+
       <div className="bg-white rounded-lg shadow-lg p-6">
           
         {error && <p className="text-red-600 mb-4 p-3 bg-red-50 rounded">{error}</p>}
@@ -316,7 +316,7 @@ export default function TodoListPage() {
             ? 'bg-gradient-to-r from-red-50 to-orange-50 border-red-200' 
             : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
         }`}>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between grid grid-cols-1 sm:grid-cols-2 gap-6 ">
             <div className="flex-1">
               <h3 className={`text-lg font-semibold mb-1 ${
                 uncompletedCount > 0 ? 'text-red-800' : 'text-blue-800'
@@ -380,20 +380,20 @@ export default function TodoListPage() {
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-2 text-2xl font-mono font-bold text-blue-800">
-              <div className="bg-white px-3 py-2 rounded-lg shadow-sm border">
+            <div className="text-right items-center gap-2 text-2xl font-mono font-bold text-blue-800">
+              <div className="bg-white px-3 py-2 rounded-lg shadow-sm border inline-block">
                 {countdown.hours.toString().padStart(2, '0')}
-                <div className="text-xs text-blue-600 font-normal">HRS</div>
+                <div className="text-xs text-blue-600 font-normal inline-block pl-1">HRS</div>
               </div>
-              <div className="text-blue-400">:</div>
-              <div className="bg-white px-3 py-2 rounded-lg shadow-sm border">
+              <div className="text-blue-400  inline-block">:</div>
+              <div className="bg-white px-3 py-2 rounded-lg shadow-sm border inline-block">
                 {countdown.minutes.toString().padStart(2, '0')}
-                <div className="text-xs text-blue-600 font-normal">MIN</div>
+                <div className="text-xs text-blue-600 font-normal inline-block pl-1">MIN</div>
               </div>
-              <div className="text-blue-400">:</div>
-              <div className="bg-white px-3 py-2 rounded-lg shadow-sm border">
+              <div className="text-blue-400 inline-block">:</div>
+              <div className="bg-white px-3 py-2 rounded-lg shadow-sm border inline-block">
                 {countdown.seconds.toString().padStart(2, '0')}
-                <div className="text-xs text-blue-600 font-normal">SEC</div>
+                <div className="text-xs text-blue-600 font-normal  inline-block pl-1">SEC</div>
               </div>
             </div>
           </div>
@@ -603,6 +603,6 @@ export default function TodoListPage() {
           )}
         </div>
       </div>
-    </main>
+
   );
 }

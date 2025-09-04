@@ -278,6 +278,16 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             <div>
               <img src="/betterlogo.png?v=1" alt="Logo" className="w-40" />
             </div>
+            <span className="text-sm font-medium">Edit Mode</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editMode}
+                      onChange={handleEditModeToggle}
+                      className="sr-only peer"
+                    />
+                    <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                  </label>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors z-50 relative"
@@ -458,7 +468,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               {/* Welcome and coins section */}
               <div className="px-6 py-4 border-t  ">
           <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 bg-white rounded-lg  p-4 border-2 border-dashed border-colour-1">
-            <div className="text-center md:text-left  ">
+            <div className="text-left  ">
              
 
               {editMode ? (
@@ -474,7 +484,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               <BreadcrumbComponent pathname={pathname} />
               </div>
             </div>
-      <div className="flex flex-col md:flex-row gap-2">
+      <div className="flex flex-row gap-2">
             {editMode ? (
               <Link href="/approve-pending" className="block group">
                 <div className="background-colour-2 text-black px-6 py-3 rounded-lg shadow-md text-white hover:opacity-80 transition-opacity cursor-pointer">
