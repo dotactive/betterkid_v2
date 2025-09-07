@@ -408,10 +408,11 @@ export default function TodoListPage() {
                 const confirmed = confirm(
                   'Are you sure you want to run the daily reset?\n\n' +
                   'This will:\n' +
-                  '• Approve all pending rewards\n' +
-                  '• Check if all daily activities are complete\n' +
+                  '• Approve pending rewards for TODO PAGE activities only\n' +
+                  '• Check if all daily activities on this page are complete\n' +
                   '• Award complete bonus OR apply incomplete fine\n' +
                   '• Reset daily activities to incomplete\n\n' +
+                  'Note: This only affects activities shown on this todo page.\n' +
                   'This action cannot be undone.'
                 );
                 
@@ -422,16 +423,22 @@ export default function TodoListPage() {
                 try {
                   setResetStatus('Running daily reset...');
                   
-                  // Step 1: Approve all pending rewards
+                  // Step 1: Approve only todo page activities (activities with repeat schedules)
                   try {
                     const pendingResponse = await axios.get(`/api/pending-money?userId=${encodeURIComponent(userId!)}`);
                     const pendingItems = pendingResponse.data || [];
+                    
+                    // Filter to only include pending items related to todo page activities (activities with repeat schedules)
+                    const todoPageActivityIds = activities.map(activity => activity.activityId);
+                    const todoPendingItems = pendingItems.filter((item: any) => 
+                      item.type === 'activity' && todoPageActivityIds.includes(item.referenceId)
+                    );
                     
                     // Get current balance
                     const balanceResponse = await axios.get(`/api/user-balance?userId=${encodeURIComponent(userId!)}`);
                     let currentBalance = balanceResponse.data.balance || 0;
                     
-                    for (const item of pendingItems) {
+                    for (const item of todoPendingItems) {
                       try {
                         // Add pending amount to current balance
                         currentBalance += item.amount;
@@ -449,7 +456,7 @@ export default function TodoListPage() {
                       }
                     }
                     
-                    setResetStatus(`Approved ${pendingItems.length} pending rewards...`);
+                    setResetStatus(`Approved ${todoPendingItems.length} todo page pending rewards...`);
                   } catch (err) {
                     console.error('Error processing pending rewards:', err);
                   }
@@ -523,7 +530,7 @@ export default function TodoListPage() {
               🔄 Run Daily Reset
             </button>
             <p className="text-sm text-orange-700 mt-2">
-              ℹ️ This will approve all pending rewards, check completion status, apply completion bonus or incomplete fine, then reset your daily activities. This only affects your own activities.
+              ℹ️ This will approve pending rewards for TODO PAGE activities only, check completion status, apply completion bonus or incomplete fine, then reset your daily activities. This only affects activities shown on this todo page.
             </p>
           </div>
         )}

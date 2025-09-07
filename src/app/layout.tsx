@@ -158,6 +158,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const [userParentCode, setUserParentCode] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const [showContactBubble, setShowContactBubble] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+  const contactRef = useRef<HTMLDivElement>(null);
 
 
   
@@ -188,6 +191,23 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       };
     }
   }, [isMobileMenuOpen]);
+
+  // Close contact bubble when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (contactRef.current && !contactRef.current.contains(event.target as Node)) {
+        setShowContactBubble(false);
+        setCopySuccess(false);
+      }
+    };
+
+    if (showContactBubble) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showContactBubble]);
 
   const fetchBalance = async () => {
     if (!userId) return;
@@ -245,6 +265,26 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     console.log('Logging out user:', userId);
     localStorage.removeItem('userId');
     router.push('/');
+  };
+
+  const copyEmailToClipboard = async () => {
+    const email = 'treble_l@hotmail.com';
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy email:', err);
+      // Fallback for browsers that don't support clipboard API
+      const textArea = document.createElement('textarea');
+      textArea.value = email;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    }
   };
 
   if (isAuthPage) {
@@ -541,7 +581,43 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           <div className="text-center md:text-left">
           © 2025 BetterKid 
           </div>
-          <div className="flex flex-col  md:flex-row  gap-3 items-center justify-end ">Contact</div>
+          <div className="flex flex-col md:flex-row gap-3 items-center justify-end relative" ref={contactRef}>
+            <button
+              onClick={() => setShowContactBubble(!showContactBubble)}
+              className="hover:text-gray-300 transition-colors cursor-pointer"
+            >
+              Contact
+            </button>
+            
+            {/* Contact Email Bubble */}
+            {showContactBubble && (
+              <div className="absolute bottom-full mb-2 right-0 bg-white text-gray-800 rounded-lg shadow-lg py-2 px-4 z-50 min-w-[280px]">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-medium">treble_l@hotmail.com</span>
+                  <button
+                    onClick={copyEmailToClipboard}
+                    className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors"
+                    title="Copy email address"
+                  >
+                    {copySuccess ? (
+                      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                {copySuccess && (
+                  <div className="text-sm text-green-600 mt-1">Email copied!</div>
+                )}
+                {/* Arrow pointing down */}
+                <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-white"></div>
+              </div>
+            )}
+          </div>
           </div>
                
                </footer>
