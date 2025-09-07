@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useEditMode } from '@/hooks/useEditMode';
 import { usePendingMoney } from '@/hooks/usePendingMoney';
 import ImagePicker from '@/components/ImagePicker';
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faPlus, 
   faMinus, 
