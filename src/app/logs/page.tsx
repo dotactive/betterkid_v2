@@ -11,6 +11,7 @@ interface BalanceLog {
   amount?: number;
   reason?: string;
   timestamp: string;
+  type?: string;
 }
 
 export default function LogsPage() {
