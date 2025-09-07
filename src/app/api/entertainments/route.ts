@@ -118,7 +118,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const updateExpressions = [];
+    const updateExpressions: string[] = [];
     const expressionAttributeValues: any = {};
     const expressionAttributeNames: any = {};
 
