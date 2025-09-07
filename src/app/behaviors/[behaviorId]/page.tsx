@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useEditMode } from '@/hooks/useEditMode';
 import { usePendingMoney } from '@/hooks/usePendingMoney';
 import ImagePicker from '@/components/ImagePicker';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
 import { 
   faPlus, 
   faMinus, 
@@ -570,7 +570,7 @@ export default function BehaviorDetailPage() {
                                 <button
                                   onClick={() => handlePendingQuantityChange(activity.activityId, -1)}
                                   disabled={activity.pending_quantity === 0}
-                                  className="bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                                  className="btn-2 disabled:bg-gray-300 disabled:cursor-not-allowed text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
                                   title="Decrease pending"
                                 >
                                   <FontAwesomeIcon icon={faMinus} className="text-xs" />
@@ -580,7 +580,7 @@ export default function BehaviorDetailPage() {
                                 </span>
                                 <button
                                   onClick={() => handlePendingQuantityChange(activity.activityId, 1)}
-                                  className="bg-green-500 hover:bg-green-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                                  className="btn-1 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
                                   title="Increase pending"
                                 >
                                   <FontAwesomeIcon icon={faPlus} className="text-xs" />
@@ -762,7 +762,7 @@ export default function BehaviorDetailPage() {
                                 <button
                                   onClick={() => handlePendingQuantityChange(activity.activityId, -1)}
                                   disabled={activity.pending_quantity === 0}
-                                  className="bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                                  className="btn-2 disabled:bg-gray-300 disabled:cursor-not-allowed text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
                                   title="Decrease pending"
                                 >
                                   <FontAwesomeIcon icon={faMinus} className="text-xs" />
@@ -772,7 +772,7 @@ export default function BehaviorDetailPage() {
                                 </span>
                                 <button
                                   onClick={() => handlePendingQuantityChange(activity.activityId, 1)}
-                                  className="bg-green-500 hover:bg-green-600 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                                  className="btn-1 text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
                                   title="Increase pending"
                                 >
                                   <FontAwesomeIcon icon={faPlus} className="text-xs" />

@@ -209,8 +209,22 @@ export default function TodoListPage() {
     // Set completed status based on pending quantity
     const newCompletedStatus = newPendingQuantity > 0 ? 'pending' : 'false';
     
+    // Update local state immediately for better UX
+    const updatedActivities: Activity[] = activities.map(a => 
+      a.activityId === activityId 
+        ? { ...a, pending_quantity: newPendingQuantity, completed: newCompletedStatus }
+        : a
+    );
+    setActivities(updatedActivities);
+    
+    // Update uncompleted count for daily activities
+    const uncompletedDaily = updatedActivities.filter(
+      (activity: Activity) => activity.repeat === 'daily' && activity.completed === 'false'
+    ).length;
+    setUncompletedCount(uncompletedDaily);
+    
     try {
-      // Update the activity's pending quantity and completed status
+      // Update the activity's pending quantity and completed status in database
       await axios.put(`/api/activities/${activityId}`, {
         activityName: activity.activityName,
         money: activity.money,
@@ -258,28 +272,31 @@ export default function TodoListPage() {
             });
           }
         }
-      } catch (err) {
-        console.error('Error managing pending money:', err);
+        
+        // Refresh global pending money state only after successful sync
+        await refreshPendingMoney();
+      } catch (pendingErr) {
+        console.error('Error managing pending money:', pendingErr);
+        // If pending money sync fails, revert the local state to maintain consistency
+        setActivities(activities);
+        const originalUncompletedDaily = activities.filter(
+          (activity: Activity) => activity.repeat === 'daily' && activity.completed === 'false'
+        ).length;
+        setUncompletedCount(originalUncompletedDaily);
+        throw pendingErr; // Re-throw to be caught by outer catch
       }
       
-      // Update local state
-      const updatedActivities: Activity[] = activities.map(a => 
-        a.activityId === activityId 
-          ? { ...a, pending_quantity: newPendingQuantity, completed: newCompletedStatus }
-          : a
-      );
-      setActivities(updatedActivities);
-      
-      // Update uncompleted count for daily activities
-      const uncompletedDaily = updatedActivities.filter(
-        (activity: Activity) => activity.repeat === 'daily' && activity.completed === 'false'
-      ).length;
-      setUncompletedCount(uncompletedDaily);
-      
-      // Refresh global pending money state
-      await refreshPendingMoney();
     } catch (err: any) {
       console.error('Error updating activity:', err);
+      // If database update fails, revert the local state
+      setActivities(activities);
+      const originalUncompletedDaily = activities.filter(
+        (activity: Activity) => activity.repeat === 'daily' && activity.completed === 'false'
+      ).length;
+      setUncompletedCount(originalUncompletedDaily);
+      // Show error message to user
+      setError(`Failed to update activity: ${err.response?.data?.error || err.message}`);
+      setTimeout(() => setError(''), 3000);
     }
   };
 
@@ -587,7 +604,7 @@ export default function TodoListPage() {
                       <button
                         onClick={() => handlePendingQuantityChange(activity.activityId, -1)}
                         disabled={activity.pending_quantity === 0}
-                        className="w-8 h-8 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center transition-colors"
+                        className="w-8 h-8 btn-2 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-full flex items-center justify-center transition-colors"
                         title="Decrease quantity"
                       >
                         <FontAwesomeIcon icon={faMinus} className="text-xs" />
@@ -597,7 +614,7 @@ export default function TodoListPage() {
                       </span>
                       <button
                         onClick={() => handlePendingQuantityChange(activity.activityId, 1)}
-                        className="w-8 h-8 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center transition-colors"
+                        className="w-8 h-8 btn-1 text-white rounded-full flex items-center justify-center transition-colors"
                         title="Increase quantity"
                       >
                         <FontAwesomeIcon icon={faPlus} className="text-xs" />

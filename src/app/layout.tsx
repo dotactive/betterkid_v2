@@ -9,6 +9,14 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
+import { 
+  faSignOut, 
+  faCog,
+  faBars
+
+} from '@fortawesome/free-solid-svg-icons';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -318,29 +326,41 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             <div>
               <img src="/betterlogo.png?v=1" alt="Logo" className="w-40" />
             </div>
-            <span className="text-sm font-medium">Edit Mode</span>
-                  <label className="relative inline-flex items-center cursor-pointer">
+            <div className="text-right">
+                <label className="relative inline-flex items-center cursor-pointer">
                     <input
                       type="checkbox"
                       checked={editMode}
                       onChange={handleEditModeToggle}
                       className="sr-only peer"
                     />
-                    <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    <div className="relative w-20 h-8 background-colour-1 rounded-full peer-focus:outline-none peer-checked:bg-gray-600 peer-checked:after:translate-x-12 after:content-[''] after:absolute after:top-[3.5px] after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all">
+                      <span className={`absolute inset-0 py-2 px-4 uppercase items-center justify-center text-xs font-medium text-white pointer-events-none ${editMode ? 'text-left' : 'text-right'}`}>
+                        {editMode ? 'Exit' : 'Edit'}
+                      </span>
+                    </div>
                   </label>
+                  <div className="mt-2 flex gap-2">
+                  {editMode && (
+                  <Link href="/settings" className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 transition-colors z-50 relative">
+                    <FontAwesomeIcon icon={faCog} />
+                  </Link>
+                )}
+                  <button 
+                  onClick={handleLogout} 
+                  className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 transition-colors z-50 relative"
+                >
+                  <FontAwesomeIcon icon={faSignOut} />
+                </button>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors z-50 relative"
+              className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 transition-colors z-50 relative"
               aria-label="Toggle menu"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {isMobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
+              <FontAwesomeIcon icon={faBars} />
             </button>
+            </div>
+            </div>
           </div>
 
           {/* Desktop layout */}
@@ -566,7 +586,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </div>
-      <main className=" flex-1">
+      <main className="px-6 py-4 flex-1">
         <div className="max-w-4xl mx-auto">
         {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
         {children}
