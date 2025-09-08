@@ -157,7 +157,7 @@ export default function SettingsPage() {
         <div className="space-y-6">
           {/* Account Settings */}
           <div className="bg-gray-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">👤 Account Settings</h2>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Account Settings</h2>
             
             <div className="space-y-4">
               <div>
@@ -208,7 +208,7 @@ export default function SettingsPage() {
 
           {/* Todo System Settings */}
           <div className="bg-blue-50 p-4 rounded-lg">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">📋 Todo System Settings</h2>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Todo System Settings</h2>
             
             <div className="space-y-4">
               <div>

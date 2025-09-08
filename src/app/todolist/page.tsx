@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useEditMode } from '@/hooks/useEditMode';
 import { usePendingMoney } from '@/hooks/usePendingMoney';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faMinus, faClock } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faMinus, faClock, faCog } from '@fortawesome/free-solid-svg-icons';
 
 interface Activity {
   activityId: string;
@@ -24,7 +24,6 @@ export default function TodoListPage() {
   const { addToPending, removeFromPending, refreshPendingMoney } = usePendingMoney();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [error, setError] = useState('');
-  const [resetStatus, setResetStatus] = useState('');
   const [countdown, setCountdown] = useState({ hours: 0, minutes: 0, seconds: 0 });
   const resetTime = '22:00'; // Fixed reset time at 10:00 PM for all users
   const [uncompletedCount, setUncompletedCount] = useState(0);
@@ -325,7 +324,6 @@ export default function TodoListPage() {
       <div className="bg-white rounded-lg shadow-lg p-6">
           
         {error && <p className="text-red-600 mb-4 p-3 bg-red-50 rounded">{error}</p>}
-        {resetStatus && <p className="mb-4 p-3 bg-blue-50 rounded text-blue-800">{resetStatus}</p>}
         
         {/* Countdown Timer */}
         <div className={`p-4 rounded-lg mb-6 border ${
@@ -333,39 +331,51 @@ export default function TodoListPage() {
             ? 'bg-gradient-to-r from-red-50 to-orange-50 border-red-200' 
             : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
         }`}>
-          <div className="flex items-center justify-between grid grid-cols-1 sm:grid-cols-2 gap-6 ">
-            <div className="flex-1">
-              <h3 className={`text-lg font-semibold mb-1 ${
-                uncompletedCount > 0 ? 'text-red-800' : 'text-blue-800'
-              }`}>
-                <FontAwesomeIcon icon={faClock} className="text-xl" /> Next Reset: {resetTime} 
-              </h3>
+
               {editMode ? (
-                <div className="space-y-2">
- 
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-700">Complete Award: $</span>
-                    <input
-                      type="number"
-                      value={completeAward}
-                      onChange={(e) => handleCompleteAwardChange(Number(e.target.value))}
-                      step="0.1"
-                      min="0"
-                      className="px-2 py-1 border rounded text-sm w-20"
-                    />
+                <div>
+           
+                  <h3 className="text-lg font-semibold mb-2">
+                    <FontAwesomeIcon icon={faCog} className="text-xl" /> Reset Settings: 
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="block text-xs font-medium text-green-700 uppercase tracking-wide">
+                        Complete Award
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-600 font-medium">$</span>
+                        <input
+                          type="number"
+                          value={completeAward}
+                          onChange={(e) => handleCompleteAwardChange(Number(e.target.value))}
+                          step="0.1"
+                          min="0"
+                          className="w-full pl-8 pr-3 py-2 border-2 border-green-200 rounded-lg text-sm font-medium text-green-800 bg-green-50 focus:border-green-400 focus:ring-2 focus:ring-green-100 focus:outline-none transition-colors"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="block text-xs font-medium text-red-700 uppercase tracking-wide">
+                        Incomplete Fine
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-red-600 font-medium">$</span>
+                        <input
+                          type="number"
+                          value={uncompleteFine}
+                          onChange={(e) => handleUncompleteFineChange(Number(e.target.value))}
+                          step="0.1"
+                          min="0"
+                          className="w-full pl-8 pr-3 py-2 border-2 border-red-200 rounded-lg text-sm font-medium text-red-800 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100 focus:outline-none transition-colors"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-700">Incomplete Fine: $</span>
-                    <input
-                      type="number"
-                      value={uncompleteFine}
-                      onChange={(e) => handleUncompleteFineChange(Number(e.target.value))}
-                      step="0.1"
-                      min="0"
-                      className="px-2 py-1 border rounded text-sm w-20"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 mt-3">
                     <span className="text-sm text-gray-700">Auto Reset:</span>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -374,12 +384,20 @@ export default function TodoListPage() {
                         onChange={(e) => handleAutoResetChange(e.target.checked)}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-300"></div>
                     </label>
                     <span className="text-xs text-gray-600 ml-1">{autoReset ? 'ON' : 'OFF'}</span>
+                    <span className='pl-2'>Auto Reset function is coming soon.</span>
                   </div>
                 </div>
               ) : (
+                <div className="flex items-center justify-between grid grid-cols-1 sm:grid-cols-2 gap-6 ">
+                <div className="flex-1">
+                  <h3 className={`text-lg font-semibold mb-1 ${
+                    uncompletedCount > 0 ? 'text-red-800' : 'text-blue-800'
+                  }`}>
+                    <FontAwesomeIcon icon={faClock} className="text-xl" /> Next Reset: {resetTime} 
+                  </h3>
                 <div>
 
                   {/* Show earn message if completeAward > 0 */}
@@ -395,8 +413,7 @@ export default function TodoListPage() {
                     </p>
                   )}
                 </div>
-              )}
-            </div>
+                </div>
             <div className="text-right items-center gap-2 text-2xl font-mono font-bold text-blue-800">
               <div className="bg-white px-3 py-2 rounded-lg shadow-sm border inline-block">
                 {countdown.hours.toString().padStart(2, '0')}
@@ -414,12 +431,13 @@ export default function TodoListPage() {
               </div>
             </div>
           </div>
+              )}
+
         </div>
         
         {/* Daily Reset Button - Only in Edit Mode */}
         {editMode && (
-          <div className="bg-orange-50 p-4 rounded-lg mb-6">
-            <h2 className="text-lg font-semibold text-orange-800 mb-3">Daily Reset</h2>
+
             <button
               onClick={async () => {
                 const confirmed = confirm(
@@ -438,9 +456,8 @@ export default function TodoListPage() {
                 }
 
                 try {
-                  setResetStatus('Running daily reset...');
-                  
                   // Step 1: Approve only todo page activities (activities with repeat schedules)
+                  let approvedCount = 0;
                   try {
                     const pendingResponse = await axios.get(`/api/pending-money?userId=${encodeURIComponent(userId!)}`);
                     const pendingItems = pendingResponse.data || [];
@@ -468,12 +485,11 @@ export default function TodoListPage() {
                         await axios.delete(`/api/pending-money/${item.pendingId}`, {
                           headers: { 'x-userid': userId }
                         });
+                        approvedCount++;
                       } catch (err) {
                         console.error('Error approving pending item:', err);
                       }
                     }
-                    
-                    setResetStatus(`Approved ${todoPendingItems.length} todo page pending rewards...`);
                   } catch (err) {
                     console.error('Error processing pending rewards:', err);
                   }
@@ -501,7 +517,7 @@ export default function TodoListPage() {
                           balance: newBalance,
                           reason: `Daily completion bonus: All ${dailyActivities.length} activities completed (+$${completeAward})`
                         });
-                        awardMessage = ` Earned $${completeAward} completion bonus!`;
+                        awardMessage = `\n• Earned $${completeAward} completion bonus!`;
                       } catch (err) {
                         console.error('Error applying complete award:', err);
                       }
@@ -516,7 +532,7 @@ export default function TodoListPage() {
                           balance: newBalance,
                           reason: `Daily incomplete fine: ${uncompletedDaily.length} activities not completed ($${uncompleteFine} per activity = $${totalFine} total)`
                         });
-                        awardMessage = ` Applied $${totalFine} incomplete fine.`;
+                        awardMessage = `\n• Applied $${totalFine} incomplete fine`;
                       } catch (err) {
                         console.error('Error applying incomplete fine:', err);
                       }
@@ -530,26 +546,24 @@ export default function TodoListPage() {
                   });
                   
                   if (response.data.resetCount !== undefined) {
-                    setResetStatus(`✅ Reset ${response.data.resetCount} daily activities.${awardMessage}`);
-                    fetchActivities(); // Refresh activities
-                    await refreshPendingMoney(); // Refresh pending money
+                    const successMessage = `✅ Daily Reset Completed!\n\n• Approved ${approvedCount} pending rewards\n• Reset ${response.data.resetCount} daily activities${awardMessage}`;
+                    alert(successMessage);
+                    
+                    // Refresh the page after successful reset
+                    window.location.reload();
                   } else {
-                    setResetStatus('❌ Daily reset failed');
+                    alert('❌ Daily reset failed - Please try again');
                   }
                 } catch (error: any) {
                   console.error('Daily reset error:', error);
-                  setResetStatus(`❌ Daily reset failed: ${error.response?.data?.error || 'Unknown error'}`);
+                  alert(`❌ Daily reset failed: ${error.response?.data?.error || 'Unknown error'}`);
                 }
-                setTimeout(() => setResetStatus(''), 8000); // Longer timeout for more complex message
               }}
-              className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              className="btn-2 px-6 py-3 rounded-lg font-medium transition-colors mb-2"
             >
-              🔄 Run Daily Reset
+             Run Daily Reset
             </button>
-            <p className="text-sm text-orange-700 mt-2">
-              ℹ️ This will approve pending rewards for TODO PAGE activities only, check completion status, apply completion bonus or incomplete fine, then reset your daily activities. This only affects activities shown on this todo page.
-            </p>
-          </div>
+
         )}
 
         {/* Activity List */}

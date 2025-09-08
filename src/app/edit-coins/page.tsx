@@ -127,13 +127,9 @@ export default function EditCoinsPage() {
   }
 
   return (
-    <div className="min-h-screen main-bg py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-colour-1 mb-2">💰 Edit Coins</h1>
-          <p className="text-gray-600 text-lg">Managing coins for <span className="font-semibold text-colour-2">{userId}</span></p>
-        </div>
+    <div>
+ 
+
 
         {/* Alert Messages */}
         {error && (
@@ -151,19 +147,19 @@ export default function EditCoinsPage() {
         <div className="bg-white shadow-xl rounded-2xl border-2 border-colour-3 p-8">
           {/* Balance Display */}
           <div className="mb-8 text-center background-colour-3 rounded-xl p-6 text-white">
-            <h2 className="text-2xl font-bold mb-3">💳 Balance Overview</h2>
+            <h2 className="text-2xl font-bold mb-3">Balance Overview</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white bg-opacity-20 rounded-lg p-4">
+              <div className="bg-white bg-opacity-20 rounded-lg p-4 text-colour-3">
                 <p className="text-sm opacity-90">Current Balance</p>
                 <p className="text-3xl font-bold">${balance.toFixed(2)}</p>
               </div>
               <div className="bg-white bg-opacity-20 rounded-lg p-4">
                 <p className="text-sm opacity-90">Pending Changes</p>
-                <p className={`text-3xl font-bold ${changes >= 0 ? 'text-green-200' : 'text-red-200'}`}>
+                <p className={`text-3xl font-bold ${changes >= 0 ? 'text-colour-1' : 'text-colour-2'}`}>
                   {changes >= 0 ? '+' : ''}${changes.toFixed(2)}
                 </p>
               </div>
-              <div className="bg-white bg-opacity-20 rounded-lg p-4">
+              <div className="bg-white bg-opacity-20 rounded-lg p-4 text-colour-3">
                 <p className="text-sm opacity-90">New Balance</p>
                 <p className="text-3xl font-bold">
                   ${(balance + changes + (inputAmount ? parseFloat(inputAmount) || 0 : 0)).toFixed(2)}
@@ -218,7 +214,7 @@ export default function EditCoinsPage() {
           {/* Custom Amount & Reason */}
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-colour-3 mb-2">💰 Custom Amount</label>
+              <label className="block text-sm font-semibold text-colour-3 mb-2">Custom Amount</label>
               <input
                 type="text"
                 value={inputAmount}
@@ -230,7 +226,7 @@ export default function EditCoinsPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-colour-3 mb-2">📝 Transaction Reason</label>
+              <label className="block text-sm font-semibold text-colour-3 mb-2">Transaction Reason</label>
               <textarea
                 value={reason}
                 onChange={handleReasonChange}
@@ -250,10 +246,10 @@ export default function EditCoinsPage() {
                   : 'btn-3 hover:scale-105'
               }`}
             >
-              {changes === 0 && !inputAmount ? '🔒 No Changes to Submit' : '✅ Submit Changes'}
+              {changes === 0 && !inputAmount ? ' No Changes to Submit' : 'Submit Changes'}
             </button>
           </div>
-        </div>
+  
       </div>
     </div>
   );
