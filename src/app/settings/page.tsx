@@ -138,9 +138,9 @@ export default function SettingsPage() {
   const hasChanges = JSON.stringify(settings) !== JSON.stringify(originalSettings) || settings.password.trim() !== '';
 
   return (
-    <main className="max-w-2xl mx-auto">
+
       <div className="bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">⚙️ Settings</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Settings</h1>
         
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -154,7 +154,7 @@ export default function SettingsPage() {
           </div>
         )}
 
-        <div className="space-y-6">
+        <div className="space-y-6 grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Account Settings */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Account Settings</h2>
@@ -304,6 +304,6 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
-    </main>
+
   );
 }
