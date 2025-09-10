@@ -19,6 +19,7 @@ export default function LogsPage() {
   const [logs, setLogs] = useState<BalanceLog[]>([]);
   const [error, setError] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isBackingUp, setIsBackingUp] = useState<string | null>(null);
   const { editMode } = useEditMode();
   useEffect(() => {
     if (isAuthenticated && userId) {
@@ -70,6 +71,44 @@ export default function LogsPage() {
     }
   };
 
+  const handleBackupToLog = async (logId: string, balanceAfter: number, timestamp: string) => {
+    const confirmed = confirm(
+      'Are you sure you want to backup to this point?\n\n' +
+      'This will:\n' +
+      `• Remove all logs after ${new Date(timestamp).toLocaleDateString()} ${new Date(timestamp).toLocaleTimeString()}\n` +
+      `• Set your current balance to $${balanceAfter.toFixed(2)}\n\n` +
+      'This action cannot be undone!'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsBackingUp(logId);
+    setError('');
+
+    try {
+      const response = await axios.post('/api/logs/backup', {
+        userId,
+        logId,
+        targetBalance: balanceAfter
+      });
+      
+      console.log('Backup response:', response.data);
+      
+      // Refresh the logs list and balance
+      await fetchLogs();
+      
+      alert(`Successfully backed up to this point! Removed ${response.data.deletedCount} logs and set balance to $${balanceAfter.toFixed(2)}`);
+    } catch (err: any) {
+      console.error('Failed to backup logs:', err);
+      setError(err.response?.data?.error || 'Failed to backup logs');
+      alert('Failed to backup logs. Please try again.');
+    } finally {
+      setIsBackingUp(null);
+    }
+  };
+
   if (isAuthenticated === null) {
     return (
       <div className="min-h-screen main-bg flex items-center justify-center">
@@ -102,7 +141,7 @@ export default function LogsPage() {
                     : 'btn-2 py-3 px-6 rounded-xl font-semibold hover:scale-105'
                 }`}
               >
-                {isDeleting ? '🗑️ Deleting...' : '🗑️ Empty All Logs'}
+                {isDeleting ? '🗑️ Deleting...' : 'Empty All Logs'}
               </button>
             )}
         {/* Alert Messages */}
@@ -123,12 +162,13 @@ export default function LogsPage() {
                   <th className="px-6 py-4 text-left text-sm font-bold text-white">Before</th>
                   <th className="px-6 py-4 text-left text-sm font-bold text-white">After</th>
                   <th className="px-6 py-4 text-left text-sm font-bold text-white">Reason</th>
+                  {editMode && <th className="px-6 py-4 text-left text-sm font-bold text-white">Actions</th>}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
                 {logs.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-16 text-center">
+                    <td colSpan={editMode ? 7 : 6} className="px-6 py-16 text-center">
                       <div className="text-6xl mb-4">📋</div>
                       <h3 className="text-xl font-bold text-colour-2 mb-2">No activity logs yet!</h3>
                       <p className="text-gray-500">Complete some todos or activities to see your progress here.</p>
@@ -210,6 +250,24 @@ export default function LogsPage() {
                           {log.reason || '-'}
                         </div>
                       </td>
+                      {editMode && (
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <button
+                            onClick={() => handleBackupToLog(log.logId, log.balanceAfter || 0, log.timestamp)}
+                            disabled={isBackingUp === log.logId || log.balanceAfter == null}
+                            className={`transition duration-200 ${
+                              isBackingUp === log.logId
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed px-3 py-1 rounded-lg text-xs'
+                                : log.balanceAfter == null
+                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed px-3 py-1 rounded-lg text-xs'
+                                : 'btn-3 px-3 py-1 rounded-lg text-xs font-medium hover:scale-105'
+                            }`}
+                            title={log.balanceAfter == null ? 'Cannot backup to this log - no balance data' : `Backup to balance: $${log.balanceAfter?.toFixed(2)}`}
+                          >
+                            {isBackingUp === log.logId ? 'Backing up...' : ' Backup'}
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
