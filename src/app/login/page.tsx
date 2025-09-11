@@ -24,7 +24,7 @@ export default function LoginPage() {
         localStorage.setItem('userId', response.data.userId);
         // Dispatch custom event to notify useAuth hook of the change
         window.dispatchEvent(new Event('auth-changed'));
-        router.push('/behaviors'); // Redirect to user page using static route
+        router.push('/todolist'); // Redirect to user page using static route
       }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to login');
@@ -82,7 +82,7 @@ export default function LoginPage() {
               disabled={loading}
               className="btn-1 w-full py-4 rounded-xl text-lg font-bold transition duration-300 disabled:opacity-50"
             >
-              {loading ? '🔄 Logging in...' : '🚀 Login'}
+              {loading ? ' Logging in...' : '🚀 Login'}
             </button>
           </form>
           

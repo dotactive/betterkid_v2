@@ -120,7 +120,7 @@ export default function BehaviorDetailPage() {
         behaviorId,
         activityName: newActivity.name.trim(),
         money: newActivity.money,
-        positive: newActivity.positive,
+        positive: addActivityForPositive,
         top: newActivity.top,
         completed: newActivity.completed,
         repeat: newActivity.repeat,
@@ -369,14 +369,11 @@ export default function BehaviorDetailPage() {
                 className="w-full p-2 border rounded"
               />
               <div className="flex gap-3">
-                <select
-                  value={newActivity.positive ? '+' : '-'}
-                  onChange={(e) => setNewActivity({ ...newActivity, positive: e.target.value === '+' })}
-                  className="p-2 border rounded"
-                >
-                  <option value="+">+ Earn</option>
-                  <option value="-">- Lose</option>
-                </select>
+                <div className={`p-2 border rounded font-medium ${
+                  addActivityForPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                }`}>
+                  {addActivityForPositive ? '+ Earn' : '- Lose'}
+                </div>
                 <input
                   type="number"
                   step="0.01"
@@ -622,7 +619,21 @@ export default function BehaviorDetailPage() {
                     )}
                   </div>
                 ))}
-
+                {editMode && (
+                  
+                  
+                  <button
+                    onClick={() => {
+                      setAddActivityForPositive(true);
+                      setShowAddActivity(true);
+                    }}
+                    className="mt-4 cursor-pointer btn-1 px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <FontAwesomeIcon icon={faPlus} />
+                    Add Good Action
+                  </button>
+                
+              )}
               </div>
             )}
             
@@ -819,18 +830,18 @@ export default function BehaviorDetailPage() {
                   </div>
                 ))}
                 {editMode && (
-                  <div className="mt-4">
+           
                     <button
                       onClick={() => {
                         setAddActivityForPositive(false);
                         setShowAddActivity(true);
                       }}
-                      className="btn-2  cursor-pointer px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                      className="btn-2 mt-4 cursor-pointer px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
                     >
                       <FontAwesomeIcon icon={faPlus} />
                       Add Action to Avoid
                     </button>
-                  </div>
+                
                 )}
               </div>
             )}

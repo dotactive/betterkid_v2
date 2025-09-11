@@ -74,7 +74,12 @@ function BreadcrumbComponent({ pathname }: { pathname: string | null }) {
             Home
           </Link>
         </li>
-        
+        {pathname === '/todolist' && (
+          <>
+            <li className="text-gray-400">/</li>
+            <li className="text-gray-800 font-medium">Todo List</li>
+          </>
+        )}
         {pathname === '/behaviors' && (
           <>
             <li className="text-gray-400">/</li>
@@ -118,12 +123,7 @@ function BreadcrumbComponent({ pathname }: { pathname: string | null }) {
           </>
         )}
         
-        {pathname === '/todolist' && (
-          <>
-            <li className="text-gray-400">/</li>
-            <li className="text-gray-800 font-medium">Todo List</li>
-          </>
-        )}
+
         
         {pathname === '/award-editor' && (
           <>
@@ -393,15 +393,16 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               {/* Desktop navigation */}
               <nav className="text-white-900 py-0 px-0 mt-5">
                 <div className="flex justify-center gap-6 font-medium">
+                <Link href="/todolist" className="btn-pr transition-colors px-3 py-2 rounded-md">
+                    Todo List
+                  </Link>
                   <Link href="/behaviors" className="btn-pr transition-colors px-3 py-2 rounded-md">
                     Behaviors
                   </Link>
                   <Link href="/activities" className="btn-pr transition-colors px-3 py-2 rounded-md">
                     Activities
                   </Link>
-                  <Link href="/todolist" className="btn-pr transition-colors px-3 py-2 rounded-md">
-                    Todo List
-                  </Link>
+
                   <Link href="/spend" className="btn-pr transition-colors px-3 py-2 rounded-md">
                     Spend Coins
                   </Link>
