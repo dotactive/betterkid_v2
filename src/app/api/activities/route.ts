@@ -18,17 +18,34 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const behaviorId = searchParams.get('behaviorId');
-    if (!behaviorId) {
-      return NextResponse.json({ error: 'Behavior ID is required' }, { status: 400 });
+    const userId = searchParams.get('userId');
+    const standalone = searchParams.get('standalone');
+
+    let params;
+
+    if (standalone === 'true' && userId) {
+      // Fetch standalone activities (not associated with any behavior)
+      params = {
+        TableName: 'betterkid_v2',
+        FilterExpression: 'partitionKey = :pk AND begins_with(sortKey, :sk)',
+        ExpressionAttributeValues: {
+          ':pk': `USER#${userId}`,
+          ':sk': 'ACTIVITY#',
+        },
+      };
+    } else if (behaviorId) {
+      // Fetch activities for a specific behavior
+      params = {
+        TableName: 'betterkid_v2',
+        FilterExpression: 'begins_with(sortKey, :sk)',
+        ExpressionAttributeValues: {
+          ':sk': `BEHAVIOR#${behaviorId}#ACTIVITY#`,
+        },
+      };
+    } else {
+      return NextResponse.json({ error: 'Either behaviorId or userId with standalone=true is required' }, { status: 400 });
     }
 
-    const params = {
-      TableName: 'betterkid_v2',
-      FilterExpression: 'begins_with(sortKey, :sk)',
-      ExpressionAttributeValues: {
-        ':sk': `BEHAVIOR#${behaviorId}#ACTIVITY#`,
-      },
-    };
     console.log('Fetching activities with params:', params);
 
     const data = await dynamoDb.send(new ScanCommand(params));
@@ -59,46 +76,49 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { behaviorId, activityName, money, positive, top, completed = 'false', repeat = 'none' }: { 
-      behaviorId: string; 
+    const { behaviorId, activityName, money, positive, top, completed = 'false', repeat = 'none', userId }: { 
+      behaviorId?: string; 
       activityName: string; 
       money: number; 
       positive: boolean; 
       top?: boolean;
       completed?: 'false' | 'pending' | 'true';
       repeat?: 'none' | 'daily' | 'weekly' | 'monthly' | 'once';
+      userId?: string;
     } = body;
     console.log('Attempting to create activity:', { behaviorId, activityName, money, positive });
 
-    if (!behaviorId || !activityName || typeof activityName !== 'string' || typeof money !== 'number' || typeof positive !== 'boolean') {
+    if (!activityName || typeof activityName !== 'string' || typeof money !== 'number' || typeof positive !== 'boolean') {
       console.error('Missing or invalid fields:', { behaviorId, activityName, money, positive });
-      return NextResponse.json({ error: 'Behavior ID, activity name, money, and positive are required' }, { status: 400 });
-    }
-
-    // Fetch behavior to get partition key
-    const behaviorParams = {
-      TableName: 'betterkid_v2',
-      Key: {
-        partitionKey: `USER#unknown`, // Will be updated
-        sortKey: `BEHAVIOR#${behaviorId}`,
-      },
-    };
-    const behaviorData = await dynamoDb.send(new ScanCommand({
-      TableName: 'betterkid_v2',
-      FilterExpression: 'sortKey = :sk',
-      ExpressionAttributeValues: { ':sk': `BEHAVIOR#${behaviorId}` },
-    }));
-    const behavior = behaviorData.Items?.[0];
-    if (!behavior) {
-      return NextResponse.json({ error: 'Behavior not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Activity name, money, and positive are required' }, { status: 400 });
     }
 
     const activityId = uuidv4();
+    let partitionKey = userId ? `USER#${userId}` : 'USER#unknown';
+    let sortKey;
+    
+    if (behaviorId && behaviorId.trim() !== '') {
+      // Fetch behavior to get partition key
+      const behaviorData = await dynamoDb.send(new ScanCommand({
+        TableName: 'betterkid_v2',
+        FilterExpression: 'sortKey = :sk',
+        ExpressionAttributeValues: { ':sk': `BEHAVIOR#${behaviorId}` },
+      }));
+      const behavior = behaviorData.Items?.[0];
+      if (!behavior) {
+        return NextResponse.json({ error: 'Behavior not found' }, { status: 404 });
+      }
+      partitionKey = behavior.partitionKey;
+      sortKey = `BEHAVIOR#${behaviorId}#ACTIVITY#${activityId}`;
+    } else {
+      // Create standalone activity without behavior association
+      sortKey = `ACTIVITY#${activityId}`;
+    }
     const params = {
       TableName: 'betterkid_v2',
       Item: {
-        partitionKey: behavior.partitionKey,
-        sortKey: `BEHAVIOR#${behaviorId}#ACTIVITY#${activityId}`,
+        partitionKey,
+        sortKey,
         activityId,
         activityName,
         money,

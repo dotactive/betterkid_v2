@@ -120,14 +120,13 @@ export default function BehaviorDetailPage() {
         behaviorId,
         activityName: newActivity.name.trim(),
         money: newActivity.money,
-        positive: addActivityForPositive,
+        positive: newActivity.positive,
         top: newActivity.top,
         completed: newActivity.completed,
         repeat: newActivity.repeat,
       });
       setNewActivity({ name: '', money: 0, positive: true, top: false, completed: 'false', repeat: 'none' });
       setShowAddActivity(false);
-      setAddActivityForPositive(true);
       fetchActivities();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to add activity');
@@ -360,71 +359,64 @@ export default function BehaviorDetailPage() {
       {editMode && showAddActivity && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowAddActivity(false)}>
           <div className="bg-white p-6 rounded-lg max-w-md w-full m-4" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-medium mb-3">Add New Activity</h3>
+            <h3 className="text-lg font-medium mb-3 text-colour-1">Add New Activity</h3>
             <div className="space-y-3">
-            <input
-              type="text"
-              value={newActivity.name}
-              onChange={(e) => setNewActivity({ ...newActivity, name: e.target.value })}
-              placeholder="Activity name"
-              className="w-full p-2 border rounded"
-            />
-            <div className="flex gap-3">
               <input
-                type="number"
-                step="0.01"
-                value={newActivity.money}
-                onChange={(e) => setNewActivity({ ...newActivity, money: parseFloat(e.target.value) || 0 })}
-                placeholder="Money amount"
-                className="flex-1 p-2 border rounded"
+                type="text"
+                value={newActivity.name}
+                onChange={(e) => setNewActivity({ ...newActivity, name: e.target.value })}
+                placeholder="Activity name"
+                className="w-full p-2 border rounded"
               />
-              <div className="p-2 border rounded bg-gray-100">
-                {addActivityForPositive ? '+' : '-'}
+              <div className="flex gap-3">
+                <select
+                  value={newActivity.positive ? '+' : '-'}
+                  onChange={(e) => setNewActivity({ ...newActivity, positive: e.target.value === '+' })}
+                  className="p-2 border rounded"
+                >
+                  <option value="+">+ Earn</option>
+                  <option value="-">- Lose</option>
+                </select>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={newActivity.money}
+                  onChange={(e) => setNewActivity({ ...newActivity, money: parseFloat(e.target.value) || 0 })}
+                  placeholder="Money amount"
+                  className="flex-1 p-2 border rounded"
+                />
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="new-activity-top"
-                checked={newActivity.top}
-                onChange={(e) => setNewActivity({ ...newActivity, top: e.target.checked })}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="new-activity-top" className="text-sm text-gray-700">
-                Pin to top (show first in list)
-              </label>
-            </div>
-            <div className="flex gap-3">
-              <select
-                value={newActivity.completed}
-                onChange={(e) => setNewActivity({ ...newActivity, completed: e.target.value as 'false' | 'pending' | 'true' })}
-                className="flex-1 p-2 border rounded"
-              >
-                <option value="false">Not Started</option>
-                <option value="pending">Pending Approval</option>
-                <option value="true">Completed</option>
-              </select>
-              <select
-                value={newActivity.repeat}
-                onChange={(e) => setNewActivity({ ...newActivity, repeat: e.target.value as 'none' | 'daily' | 'weekly' | 'monthly' | 'once' })}
-                className="flex-1 p-2 border rounded"
-              >
-                <option value="none">None</option>
-                <option value="once">Once</option>
-                <option value="daily">Daily</option>
-
-              </select>
-            </div>
+              <div className="flex items-center gap-3">
+                <select
+                  value={newActivity.repeat}
+                  onChange={(e) => setNewActivity({ ...newActivity, repeat: e.target.value as 'none' | 'daily' | 'weekly' | 'monthly' | 'once' })}
+                  className="flex-1 p-2 border rounded"
+                >
+                  <option value="none">Not Showing on Todo</option>
+                  <option value="once">Once</option>
+                  <option value="daily">Daily</option>
+                </select>
+                <span>Top:</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newActivity.top}
+                    onChange={(e) => setNewActivity({ ...newActivity, top: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="relative w-11.5 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-400"></div>
+                </label>
+              </div>
               <div className="flex gap-2">
                 <button
                   onClick={handleAddActivity}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                  className="flex-1 btn-1 px-4 py-2 rounded"
                 >
                   Add Activity
                 </button>
                 <button
                   onClick={() => setShowAddActivity(false)}
-                  className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded"
+                  className="px-4 py-2 btn-2 rounded"
                 >
                   Cancel
                 </button>
@@ -455,7 +447,25 @@ export default function BehaviorDetailPage() {
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                   <FontAwesomeIcon icon={faPlus} className="text-2xl text-gray-400" />
                 </div>
-                <p className="text-center">No good actions yet!</p>
+                
+
+                {editMode ? (
+                  
+                  
+                    <button
+                      onClick={() => {
+                        setAddActivityForPositive(true);
+                        setShowAddActivity(true);
+                      }}
+                      className="cursor-pointer btn-1 px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <FontAwesomeIcon icon={faPlus} />
+                      Add Good Action
+                    </button>
+                  
+                ):(
+                  <p className="text-sm text-center mt-1">No good action yet</p>
+                )}
                 <p className="text-sm text-center mt-1">Add some positive activities to get started.</p>
               </div>
             ) : (
@@ -612,23 +622,10 @@ export default function BehaviorDetailPage() {
                     )}
                   </div>
                 ))}
-                {editMode && (
-                  
-                  <div className="mt-4 ">
-                    <button
-                      onClick={() => {
-                        setAddActivityForPositive(true);
-                        setShowAddActivity(true);
-                      }}
-                      className="cursor-pointer btn-1 px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
-                    >
-                      <FontAwesomeIcon icon={faPlus} />
-                      Add Good Action
-                    </button>
-                  </div>
-                )}
+
               </div>
             )}
+            
           </div>
         </section>
         
@@ -648,9 +645,26 @@ export default function BehaviorDetailPage() {
             {negativeActivities.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-gray-400">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                  <FontAwesomeIcon icon={faSmile} className="text-2xl text-gray-400" />
+                  <FontAwesomeIcon icon={faMinus} className="text-2xl text-gray-400" />
                 </div>
-                <p className="text-center">No negative activities!</p>
+
+                {editMode ? (
+            
+                    <button
+                      onClick={() => {
+                        setAddActivityForPositive(false);
+                        setShowAddActivity(true);
+                      }}
+                      className="btn-2  cursor-pointer px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <FontAwesomeIcon icon={faPlus} />
+                      Add Action to Avoid
+                    </button>
+              
+                ):(
+<p className="text-center">No negative activities!</p>
+                )}
+                
                 <p className="text-sm text-center mt-1">That's great - keep up the good work!</p>
               </div>
             ) : (

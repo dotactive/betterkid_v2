@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '@/hooks/useAuth';
+import { useEditMode } from '@/hooks/useEditMode';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faPlus, 
@@ -10,7 +11,11 @@ import {
   faFilter,
   faSearch,
   faSort,
-  faThumbtack
+  faThumbtack,
+  faEdit,
+  faTrash,
+  faCheck,
+  faTimes
 } from '@fortawesome/free-solid-svg-icons';
 
 interface Activity {
@@ -30,6 +35,7 @@ interface Behavior {
 
 export default function ActivitiesPage() {
   const { isAuthenticated, userId } = useAuth();
+  const { editMode } = useEditMode();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [behaviors, setBehaviors] = useState<Behavior[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,12 +46,43 @@ export default function ActivitiesPage() {
   const [filterType, setFilterType] = useState<'all' | 'positive' | 'negative'>('all');
   const [sortBy, setSortBy] = useState<'name' | 'money' | 'behavior'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  
+  // New activity popup states
+  const [showAddActivity, setShowAddActivity] = useState(false);
+  const [newActivity, setNewActivity] = useState({
+    name: '',
+    money: 0,
+    positive: true,
+    top: false,
+    completed: 'false' as 'false' | 'pending' | 'true',
+    repeat: 'none' as 'none' | 'daily' | 'weekly' | 'monthly' | 'once',
+    behaviorId: ''
+  });
+  
+  // Edit activity states
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
+  const [editingActivity, setEditingActivity] = useState({
+    name: '',
+    money: 0,
+    positive: true,
+    top: false,
+    completed: 'false' as 'false' | 'pending' | 'true',
+    repeat: 'none' as 'none' | 'daily' | 'weekly' | 'monthly' | 'once',
+    behaviorId: ''
+  });
 
   useEffect(() => {
     if (isAuthenticated && userId) {
       fetchBehaviors();
     }
   }, [isAuthenticated, userId]);
+
+  useEffect(() => {
+    if (!editMode) {
+      setShowAddActivity(false);
+      setEditingActivityId(null);
+    }
+  }, [editMode]);
 
   const fetchBehaviors = async () => {
     try {
@@ -68,6 +105,7 @@ export default function ActivitiesPage() {
     try {
       const allActivities: Activity[] = [];
       
+      // Fetch activities for each behavior
       for (const behavior of behaviorsData) {
         try {
           const response = await axios.get(`/api/activities?behaviorId=${encodeURIComponent(behavior.behaviorId)}`);
@@ -86,11 +124,137 @@ export default function ActivitiesPage() {
         }
       }
       
+      // Fetch standalone activities (not associated with any behavior)
+      if (userId) {
+        try {
+          const standaloneResponse = await axios.get(`/api/activities?userId=${encodeURIComponent(userId)}&standalone=true`);
+          const standaloneActivities = standaloneResponse.data || [];
+          
+          // Add placeholder behavior info for standalone activities
+          const activitiesWithPlaceholder = standaloneActivities.map((activity: Activity) => ({
+            ...activity,
+            behaviorId: null,
+            behaviorName: 'No Behavior',
+          }));
+          
+          allActivities.push(...activitiesWithPlaceholder);
+        } catch (err) {
+          console.error('Failed to fetch standalone activities:', err);
+        }
+      }
+      
       setActivities(allActivities);
     } catch (err: any) {
       console.error('Failed to fetch activities:', err);
       setError('Failed to fetch activities');
     }
+  };
+
+  const handleAddActivity = async () => {
+    if (!newActivity.name.trim()) {
+      setError('Activity name is required');
+      return;
+    }
+    
+    try {
+      await axios.post('/api/activities', {
+        behaviorId: newActivity.behaviorId || null,
+        activityName: newActivity.name.trim(),
+        money: newActivity.money,
+        positive: newActivity.positive,
+        top: newActivity.top,
+        completed: newActivity.completed,
+        repeat: newActivity.repeat,
+        userId: userId,
+      });
+      setNewActivity({
+        name: '',
+        money: 0,
+        positive: true,
+        top: false,
+        completed: 'false',
+        repeat: 'none',
+        behaviorId: ''
+      });
+      setShowAddActivity(false);
+      // Refetch all activities to show the new one
+      fetchBehaviors();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to add activity');
+    }
+  };
+
+  const handleDeleteActivity = async (activityId: string) => {
+    if (!confirm('Are you sure you want to delete this activity?')) {
+      return;
+    }
+    
+    try {
+      await axios.delete(`/api/activities/${activityId}`);
+      // Refetch all activities to show the updated list
+      fetchBehaviors();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to delete activity');
+    }
+  };
+
+  const handleEditActivity = (activity: Activity) => {
+    setEditingActivityId(activity.activityId);
+    setEditingActivity({
+      name: activity.activityName,
+      money: activity.money,
+      positive: activity.positive,
+      top: activity.top || false,
+      completed: activity.completed || 'false',
+      repeat: activity.repeat || 'none',
+      behaviorId: activity.behaviorId || ''
+    });
+  };
+
+  const handleSaveActivity = async (activityId: string) => {
+    if (!editingActivity.name.trim()) {
+      setError('Activity name is required');
+      return;
+    }
+    
+    try {
+      await axios.put(`/api/activities/${activityId}`, {
+        activityName: editingActivity.name.trim(),
+        money: editingActivity.money,
+        positive: editingActivity.positive,
+        top: editingActivity.top,
+        completed: editingActivity.completed,
+        repeat: editingActivity.repeat,
+        behaviorId: editingActivity.behaviorId || null,
+      });
+      setEditingActivityId(null);
+      setEditingActivity({
+        name: '',
+        money: 0,
+        positive: true,
+        top: false,
+        completed: 'false',
+        repeat: 'none',
+        behaviorId: ''
+      });
+      // Refetch all activities to show the updated list
+      fetchBehaviors();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to update activity');
+    }
+  };
+
+  const handleCancelEditActivity = () => {
+    setEditingActivityId(null);
+    setEditingActivity({
+      name: '',
+      money: 0,
+      positive: true,
+      top: false,
+      completed: 'false',
+      repeat: 'none',
+      behaviorId: ''
+    });
   };
 
   // Filter and sort activities
@@ -241,13 +405,109 @@ export default function ActivitiesPage() {
         </div>
       )}
 
+      {/* Add Activity Modal */}
+      {editMode && showAddActivity && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowAddActivity(false)}>
+          <div className="bg-white p-6 rounded-lg max-w-md w-full m-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-medium mb-3 text-colour-1">Add New Activity</h3>
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={newActivity.name}
+                onChange={(e) => setNewActivity({ ...newActivity, name: e.target.value })}
+                placeholder="Activity name"
+                className="w-full p-2 border rounded"
+              />
+              <select
+                value={newActivity.behaviorId}
+                onChange={(e) => setNewActivity({ ...newActivity, behaviorId: e.target.value })}
+                className="w-full p-2 border rounded"
+              >
+                <option value="">Select a behavior...</option>
+                {behaviors.map((behavior) => (
+                  <option key={behavior.behaviorId} value={behavior.behaviorId}>
+                    {behavior.behaviorName}
+                  </option>
+                ))}
+              </select>
+              <div className="flex gap-3">
+                <select
+                  value={newActivity.positive ? '+' : '-'}
+                  onChange={(e) => setNewActivity({ ...newActivity, positive: e.target.value === '+' })}
+                  className="p-2 border rounded"
+                >
+                  <option value="+">+ Earn</option>
+                  <option value="-">- Lose</option>
+                </select>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={newActivity.money}
+                  onChange={(e) => setNewActivity({ ...newActivity, money: parseFloat(e.target.value) || 0 })}
+                  placeholder="Money amount"
+                  className="flex-1 p-2 border rounded"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+
+                <select
+                value={newActivity.repeat}
+                onChange={(e) => setNewActivity({ ...newActivity, repeat: e.target.value as 'none' | 'daily' | 'weekly' | 'monthly' | 'once' })}
+                className="flex-1 p-2 border rounded"
+              >
+                <option value="none">Not Showing on Todo</option>
+                <option value="once">Once</option>
+                <option value="daily">Daily</option>
+                {/* <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option> */}
+              </select>
+<span>Top:</span>
+              <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newActivity.top}
+                    onChange={(e) => setNewActivity({ ...newActivity, top: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="relative w-11.5 h-6 bg-gray-200 peer-focus:outline-none  rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-400">
+          
+                  </div>
+                </label>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAddActivity}
+                  className="flex-1 btn-1 px-4 py-2 rounded"
+                >
+                  Add Activity
+                </button>
+                <button
+                  onClick={() => setShowAddActivity(false)}
+                  className="px-4 py-2 btn-2 rounded"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Activities List */}
       <div className="">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Activities ({filteredAndSortedActivities.length})
-          </h2>
-        </div>
+
+
+            {editMode && (
+              <button
+                onClick={() => setShowAddActivity(true)}
+                className="btn-1 px-4 py-2 mb-2 rounded-lg font-medium flex items-center  transition-colors"
+              >
+                <FontAwesomeIcon icon={faPlus} />
+                New Activity
+              </button>
+            )}
+ 
 
         {filteredAndSortedActivities.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
@@ -265,56 +525,148 @@ export default function ActivitiesPage() {
         ) : (
           <div className="divide-y divide-gray-200">
             {filteredAndSortedActivities.map((activity) => (
-              <div key={activity.activityId} className="p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4 flex-1">
-                    {/* Activity Type Icon */}
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      activity.positive 
-                        ? 'bg-green-500' 
-                        : 'bg-red-500'
-                    }`}>
-                      <FontAwesomeIcon 
-                        icon={activity.positive ? faPlus : faMinus} 
-                        className="text-white text-lg" 
+              <div key={activity.activityId} className="group">
+                {editMode && editingActivityId === activity.activityId ? (
+                  <div className="bg-gray-50 rounded-lg p-4 border-2 border-blue-200">
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        value={editingActivity.name}
+                        onChange={(e) => setEditingActivity({ ...editingActivity, name: e.target.value })}
+                        className="w-full p-3 border border-gray-300 rounded-lg text-gray-900 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                        placeholder="Activity name"
                       />
-                    </div>
-
-                    {/* Activity Details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="text-lg font-semibold text-gray-900 truncate">
-                          {activity.activityName}
-                        </h3>
-                        {activity.top && (
-                          <FontAwesomeIcon 
-                            icon={faThumbtack} 
-                            className="text-blue-500 text-sm" 
-                            title="Pinned to top"
+                      <select
+                        value={editingActivity.behaviorId}
+                        onChange={(e) => setEditingActivity({ ...editingActivity, behaviorId: e.target.value })}
+                        className="w-full p-3 border border-gray-300 rounded-lg text-gray-900 focus:border-blue-400"
+                      >
+                        <option value="">No Behavior</option>
+                        {behaviors.map((behavior) => (
+                          <option key={behavior.behaviorId} value={behavior.behaviorId}>
+                            {behavior.behaviorName}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex gap-3">
+                        <select
+                          value={editingActivity.positive ? '+' : '-'}
+                          onChange={(e) => setEditingActivity({ ...editingActivity, positive: e.target.value === '+' })}
+                          className="p-3 border border-gray-300 rounded-lg text-gray-900 focus:border-blue-400"
+                        >
+                          <option value="+">+ Earn</option>
+                          <option value="-">- Lose</option>
+                        </select>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={editingActivity.money}
+                          onChange={(e) => setEditingActivity({ ...editingActivity, money: parseFloat(e.target.value) || 0 })}
+                          className="flex-1 p-3 border border-gray-300 rounded-lg text-gray-900 focus:border-blue-400"
+                          placeholder="Amount"
+                        />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <select
+                          value={editingActivity.repeat}
+                          onChange={(e) => setEditingActivity({ ...editingActivity, repeat: e.target.value as 'none' | 'daily' | 'weekly' | 'monthly' | 'once' })}
+                          className="flex-1 p-3 border border-gray-300 rounded-lg text-gray-900 focus:border-blue-400"
+                        >
+                          <option value="none">Not Showing on Todo</option>
+                          <option value="once">Once</option>
+                          <option value="daily">Daily</option>
+                        </select>
+                        <span>Top:</span>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={editingActivity.top}
+                            onChange={(e) => setEditingActivity({ ...editingActivity, top: e.target.checked })}
+                            className="sr-only peer"
                           />
+                          <div className="relative w-11.5 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-400"></div>
+                        </label>
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          onClick={() => handleSaveActivity(activity.activityId)}
+                          className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                        >
+                          <FontAwesomeIcon icon={faCheck} className="mr-2" />
+                          Save
+                        </button>
+                        <button
+                          onClick={handleCancelEditActivity}
+                          className="flex-1 bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                        >
+                          <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4 flex-1">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2">
+                            <h3 className="text-lg font-semibold text-gray-900 truncate">
+                              {activity.activityName}
+                            </h3>
+                            {activity.top && (
+                              <FontAwesomeIcon 
+                                icon={faThumbtack} 
+                                className="text-blue-500 text-sm" 
+                                title="Pinned to top"
+                              />
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600 truncate">
+                            Behavior: {activity.behaviorName || 'Unknown'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        {/* Amount */}
+                        <div className="flex items-center space-x-2">
+                          <span className={`text-xl font-bold ${
+                            activity.positive ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {activity.positive ? '+' : '-'}${Math.abs(activity.money).toFixed(2)}
+                          </span>
+                          <FontAwesomeIcon 
+                            icon={faCoins} 
+                            className={`text-sm ${
+                              activity.positive ? 'text-green-500' : 'text-red-500'
+                            }`}
+                          />
+                        </div>
+
+                        {/* Edit/Delete buttons (visible in edit mode) */}
+                        {editMode && (
+                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => handleEditActivity(activity)}
+                              className="bg-amber-500 hover:bg-amber-600 text-white p-2 rounded-lg shadow-sm transition-colors"
+                              title="Edit activity"
+                            >
+                              <FontAwesomeIcon icon={faEdit} className="text-sm" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteActivity(activity.activityId)}
+                              className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg shadow-sm transition-colors"
+                              title="Delete activity"
+                            >
+                              <FontAwesomeIcon icon={faTrash} className="text-sm" />
+                            </button>
+                          </div>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 truncate">
-                        Behavior: {activity.behaviorName || 'Unknown'}
-                      </p>
                     </div>
                   </div>
-
-                  {/* Amount */}
-                  <div className="flex items-center space-x-2">
-                    <span className={`text-xl font-bold ${
-                      activity.positive ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {activity.positive ? '+' : '-'}${Math.abs(activity.money).toFixed(2)}
-                    </span>
-                    <FontAwesomeIcon 
-                      icon={faCoins} 
-                      className={`text-sm ${
-                        activity.positive ? 'text-green-500' : 'text-red-500'
-                      }`}
-                    />
-                  </div>
-                </div>
+                )}
               </div>
             ))}
           </div>
