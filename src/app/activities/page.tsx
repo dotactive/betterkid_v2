@@ -26,6 +26,8 @@ interface Activity {
   top?: boolean;
   behaviorId?: string;
   behaviorName?: string;
+  completed?: 'false' | 'pending' | 'true';
+  repeat?: 'none' | 'daily' | 'weekly' | 'monthly' | 'once';
 }
 
 interface Behavior {
