@@ -98,6 +98,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ acti
           pending_quantity: pending_quantity !== undefined ? pending_quantity : activity.pending_quantity || 0,
           completed: completed || 'false',
           repeat: repeat || 'none',
+          behaviorId: behaviorId && behaviorId.trim() !== '' ? behaviorId.trim() : null,
         },
       }));
       console.log('DynamoDB PUT (recreate) result:', result);
@@ -109,7 +110,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ acti
           partitionKey: activity.partitionKey,
           sortKey: activity.sortKey,
         },
-        UpdateExpression: 'SET activityName = :name, money = :money, positive = :positive, #top = :top, pending_quantity = :pending_quantity, completed = :completed, #repeat = :repeat',
+        UpdateExpression: 'SET activityName = :name, money = :money, positive = :positive, #top = :top, pending_quantity = :pending_quantity, completed = :completed, #repeat = :repeat, behaviorId = :behaviorId',
         ExpressionAttributeNames: {
           '#top': 'top',
           '#repeat': 'repeat'
@@ -122,6 +123,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ acti
           ':pending_quantity': pending_quantity !== undefined ? pending_quantity : activity.pending_quantity || 0,
           ':completed': completed || 'false',
           ':repeat': repeat || 'none',
+          ':behaviorId': behaviorId && behaviorId.trim() !== '' ? behaviorId.trim() : null,
         },
         ConditionExpression: 'attribute_exists(partitionKey)',
       };

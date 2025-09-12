@@ -180,6 +180,7 @@ export default function BehaviorDetailPage() {
         completed: editingActivity.completed,
         repeat: editingActivity.repeat,
         pending_quantity: currentActivity.pending_quantity, // Preserve existing pending_quantity
+        behaviorId: behaviorId, // Preserve the behavior association
       });
       setEditingActivityId(null);
       setEditingActivity({ name: '', money: 0, positive: true, top: false, completed: 'false', repeat: 'none' });
@@ -214,6 +215,7 @@ export default function BehaviorDetailPage() {
         pending_quantity: newPendingQuantity,
         completed: newCompletedStatus,
         repeat: activity.repeat,
+        behaviorId: behaviorId, // Preserve the behavior association
       });
       
       // Always sync pending money record with current pending quantity

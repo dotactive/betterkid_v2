@@ -60,6 +60,7 @@ export async function GET(request: Request) {
       pending_quantity: item.pending_quantity || 0,
       completed: item.completed || 'false',
       repeat: item.repeat || 'none',
+      behaviorId: item.behaviorId || null,
     })) || [];
 
     return NextResponse.json(activities);
@@ -127,6 +128,7 @@ export async function POST(request: Request) {
         pending_quantity: 0,
         completed,
         repeat,
+        behaviorId: behaviorId && behaviorId.trim() !== '' ? behaviorId.trim() : null,
       },
       ConditionExpression: 'attribute_not_exists(partitionKey) AND attribute_not_exists(sortKey)',
     };

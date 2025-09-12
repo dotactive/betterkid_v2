@@ -16,6 +16,7 @@ interface Activity {
   pending_quantity: number;
   completed?: 'false' | 'pending' | 'true';
   repeat?: 'none' | 'daily' | 'weekly' | 'monthly' | 'once';
+  behaviorId?: string;
 }
 
 export default function TodoListPage() {
@@ -71,10 +72,25 @@ export default function TodoListPage() {
         try {
           const activitiesResponse = await axios.get(`/api/activities?behaviorId=${encodeURIComponent(behavior.behaviorId)}`);
           const behaviorActivities = activitiesResponse.data || [];
-          allActivities = allActivities.concat(behaviorActivities);
+          // Add behaviorId to each activity
+          const activitiesWithBehaviorId = behaviorActivities.map((activity: Activity) => ({
+            ...activity,
+            behaviorId: behavior.behaviorId
+          }));
+          allActivities = allActivities.concat(activitiesWithBehaviorId);
         } catch (err) {
           console.error(`Failed to fetch activities for behavior ${behavior.behaviorId}:`, err);
         }
+      }
+      
+      // Also fetch standalone activities (not associated with any behavior)
+      try {
+        const standaloneResponse = await axios.get(`/api/activities?userId=${encodeURIComponent(userId)}&standalone=true`);
+        const standaloneActivities = standaloneResponse.data || [];
+        // Add these activities without behaviorId (they are standalone)
+        allActivities = allActivities.concat(standaloneActivities);
+      } catch (err) {
+        console.error('Failed to fetch standalone activities:', err);
       }
       
       // Filter activities where repeat is not 'none'
@@ -232,6 +248,7 @@ export default function TodoListPage() {
         pending_quantity: newPendingQuantity,
         completed: newCompletedStatus,
         repeat: activity.repeat,
+        behaviorId: activity.behaviorId, // Preserve the behavior association
       });
       
       // Always sync pending money record with current pending quantity
