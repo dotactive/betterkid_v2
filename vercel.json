@@ -3,10 +3,7 @@
     {
       "path": "/api/cron/daily-reset",
       "schedule": "0 22 * * *"
-    },
-    {
-      "path": "/api/cron/set-autoreset",
-      "schedule": "0 21 * * *"
     }
+
   ]
 }

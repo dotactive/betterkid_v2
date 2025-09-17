@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ScanCommand, UpdateCommand, PutCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import dynamoDb from '@/lib/aws-config';
+import axios from 'axios';
 
 export async function GET(request: Request) {
   try {
@@ -28,6 +29,8 @@ export async function GET(request: Request) {
     let errorCount = 0;
     let usersProcessed = 0;
     let usersSkipped = 0;
+    let completionBonusCount = 0;
+    let incompleteFineCount = 0;
 
     // Step 1: Get all users with auto_reset enabled
     console.log('👥 Step 1: Fetching users with auto_reset enabled...');
@@ -46,11 +49,11 @@ export async function GET(request: Request) {
     
     console.log(`👥 Found ${usersWithAutoReset.length} users with auto_reset enabled`);
 
-    // Step 2: Get all pending activities for users with auto_reset enabled
-    console.log('📋 Step 2: Fetching pending activities for auto_reset users...');
-    
+    // Step 2: Get all repeatable activities for users with auto_reset enabled (like manual reset does)
+    console.log('📋 Step 2: Fetching repeatable activities for auto_reset users...');
+
     const userPartitionKeys = usersWithAutoReset.map(user => user.partitionKey);
-    
+
     if (userPartitionKeys.length === 0) {
       console.log('⏭️ No users have auto_reset enabled, skipping reset');
       return NextResponse.json({
@@ -62,221 +65,230 @@ export async function GET(request: Request) {
           approvedActivities: 0,
           resetDailyActivities: 0,
           cleanedPendingRecords: 0,
+          completionBonuses: 0,
+          incompleteFines: 0,
           errors: 0,
         },
       });
     }
 
-    const scanPendingParams = {
+    // Get all activities with repeat schedules for auto_reset enabled users (includes behavior-based AND standalone)
+
+    // Scan for behavior-based activities
+    const scanBehaviorActivitiesParams = {
       TableName: 'betterkid_v2',
-      FilterExpression: 'begins_with(sortKey, :activityPrefix) AND pending_quantity > :zero',
+      FilterExpression: 'begins_with(sortKey, :behaviorPrefix) AND #repeat <> :none',
+      ExpressionAttributeNames: {
+        '#repeat': 'repeat',
+      },
       ExpressionAttributeValues: {
-        ':activityPrefix': 'BEHAVIOR#',
-        ':zero': 0,
+        ':behaviorPrefix': 'BEHAVIOR#',
+        ':none': 'none',
       },
     };
 
-    const pendingActivitiesResult = await dynamoDb.send(new ScanCommand(scanPendingParams));
-    const allPendingActivities = pendingActivitiesResult.Items || [];
-    
+    const behaviorActivitiesResult = await dynamoDb.send(new ScanCommand(scanBehaviorActivitiesParams));
+    const allBehaviorActivities = behaviorActivitiesResult.Items || [];
+
+    // Scan for standalone activities
+    const scanStandaloneActivitiesParams = {
+      TableName: 'betterkid_v2',
+      FilterExpression: 'begins_with(sortKey, :activityPrefix) AND #repeat <> :none',
+      ExpressionAttributeNames: {
+        '#repeat': 'repeat',
+      },
+      ExpressionAttributeValues: {
+        ':activityPrefix': 'ACTIVITY#',
+        ':none': 'none',
+      },
+    };
+
+    const standaloneActivitiesResult = await dynamoDb.send(new ScanCommand(scanStandaloneActivitiesParams));
+    const allStandaloneActivities = standaloneActivitiesResult.Items || [];
+
+    // Combine both types of activities
+    const allRepeatableActivities = [...allBehaviorActivities, ...allStandaloneActivities];
+
     // Filter activities to only include those belonging to users with auto_reset enabled
-    const pendingActivities = allPendingActivities.filter(activity => 
+    const repeatableActivities = allRepeatableActivities.filter(activity =>
       userPartitionKeys.includes(activity.partitionKey)
     );
-    
-    console.log(`📋 Found ${pendingActivities.length} pending activities from auto_reset enabled users (${allPendingActivities.length} total pending activities)`);
+
+    console.log(`📋 Found ${repeatableActivities.length} repeatable activities from auto_reset enabled users (${allBehaviorActivities.length} behavior-based + ${allStandaloneActivities.length} standalone = ${allRepeatableActivities.length} total)`);
 
     usersProcessed = usersWithAutoReset.length;
     const totalUsers = usersResult.Items?.length || 0;
     usersSkipped = totalUsers - usersProcessed;
 
-    // Step 3: Process each pending activity
-    for (const activity of pendingActivities) {
+    // Step 3: Process each user individually like the manual reset does
+    for (const user of usersWithAutoReset) {
       try {
-        console.log(`🔄 Processing activity: ${activity.activityName} (${activity.activityId})`);
-        
-        // Approve the pending activity
-        const pendingQuantity = activity.pending_quantity || 0;
-        const moneyPerActivity = activity.money || 0;
-        const totalPendingMoney = pendingQuantity * moneyPerActivity * (activity.positive ? 1 : -1);
-        
-        if (pendingQuantity > 0 && totalPendingMoney !== 0) {
-          // Get user info for balance update
-          const userScanParams = {
-            TableName: 'betterkid_v2',
-            KeyConditionExpression: 'partitionKey = :pk AND sortKey = :sk',
-            ExpressionAttributeValues: {
-              ':pk': activity.partitionKey,
-              ':sk': 'METADATA',
-            },
-          };
-          
-          const userResult = await dynamoDb.send(new ScanCommand({
-            TableName: 'betterkid_v2',
-            FilterExpression: 'partitionKey = :pk AND sortKey = :sk',
-            ExpressionAttributeValues: userScanParams.ExpressionAttributeValues,
-          }));
-          
-          const user = userResult.Items?.[0];
-          if (user) {
-            // Update user balance
-            const currentBalance = user.balance || 0;
-            const newBalance = currentBalance + totalPendingMoney;
-            
-            const updateUserParams = {
-              TableName: 'betterkid_v2',
-              Key: {
-                partitionKey: user.partitionKey,
-                sortKey: user.sortKey,
-              },
-              UpdateExpression: 'SET balance = :balance',
-              ExpressionAttributeValues: {
-                ':balance': newBalance,
-              },
-            };
-            
-            await dynamoDb.send(new UpdateCommand(updateUserParams));
-            console.log(`💰 Updated user balance: ${currentBalance} → ${newBalance}`);
+        console.log(`👤 Processing user: ${user.partitionKey}`);
+
+        // Extract userId from partitionKey (USER#userId -> userId)
+        const userId = user.partitionKey.replace('USER#', '');
+
+        // Step 3a: Approve pending money records using the user-balance API like manual reset does
+        console.log(`💰 Step 3a: Approving pending money for user: ${userId}`);
+
+        // Get all activity IDs for activities with repeat schedules (like manual reset does)
+        const userActivities = repeatableActivities.filter(activity =>
+          activity.partitionKey === user.partitionKey
+        );
+
+        try {
+          // Get pending money records via API (like manual reset)
+          const baseUrl = request.headers.get('host') ? `http://${request.headers.get('host')}` : 'http://localhost:3000';
+          const pendingResponse = await axios.get(`${baseUrl}/api/pending-money?userId=${encodeURIComponent(userId)}`);
+          const pendingItems = pendingResponse.data || [];
+
+          const todoPageActivityIds = userActivities.map(activity => activity.activityId);
+
+          // Filter to only include pending items related to todo page activities
+          const todoPendingItems = pendingItems.filter((item: any) =>
+            item.type === 'activity' && todoPageActivityIds.includes(item.referenceId)
+          );
+
+          console.log(`💰 Found ${todoPendingItems.length} pending money records for user ${userId}`);
+
+          // Get current balance via API
+          const balanceResponse = await axios.get(`${baseUrl}/api/user-balance?userId=${encodeURIComponent(userId)}`);
+          let currentBalance = balanceResponse.data.balance || 0;
+
+          for (const item of todoPendingItems) {
+            try {
+              // Add pending amount to current balance
+              currentBalance += item.amount;
+
+              // Update balance using the API (which creates proper logs)
+              await axios.put(`${baseUrl}/api/user-balance`, {
+                userId: userId,
+                balance: currentBalance,
+                reason: `Approved: ${item.reason}`
+              });
+
+              // Delete the pending money record
+              await axios.delete(`${baseUrl}/api/pending-money/${item.pendingId}`, {
+                headers: { 'x-userid': userId }
+              });
+
+              console.log(`💰 Approved pending item: ${item.reason} (+$${item.amount})`);
+              approvedCount++;
+            } catch (err) {
+              console.error('❌ Error approving pending item:', err);
+              errorCount++;
+            }
           }
 
-          // Log the approval
-          const logId = `LOG#${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-          const logItem = {
-            partitionKey: activity.partitionKey,
-            sortKey: logId,
-            logId: logId,
-            activityId: activity.activityId,
-            activityName: activity.activityName,
-            type: 'activity',
-            action: 'cron_approve',
-            amount: totalPendingMoney,
-            quantity: pendingQuantity,
-            timestamp: new Date().toISOString(),
-            reason: `Auto-approved ${pendingQuantity} × $${moneyPerActivity} = $${totalPendingMoney} via daily cron job`,
-          };
+          // Update local user balance for completion bonus/fine calculations
+          user.balance = currentBalance;
 
-          await dynamoDb.send(new PutCommand({
-            TableName: 'betterkid_v2',
-            Item: logItem,
-          }));
-          
-          console.log(`📝 Created approval log: ${logId}`);
+        } catch (err) {
+          console.error('❌ Error processing pending rewards:', err);
+          errorCount++;
         }
 
-        // Determine what to do based on repeat type
-        const repeatType = activity.repeat || 'none';
-        
-        if (repeatType === 'once') {
-          // Delete 'once' activities
-          const deleteParams = {
-            TableName: 'betterkid_v2',
-            Key: {
-              partitionKey: activity.partitionKey,
-              sortKey: activity.sortKey,
-            },
-          };
-          
-          await dynamoDb.send(new DeleteCommand(deleteParams));
-          console.log(`🗑️ Deleted 'once' activity: ${activity.activityName}`);
-          
-        } else if (repeatType === 'daily') {
-          // Reset daily activities to completed = 'false' and pending_quantity = 0
-          const updateParams = {
-            TableName: 'betterkid_v2',
-            Key: {
-              partitionKey: activity.partitionKey,
-              sortKey: activity.sortKey,
-            },
-            UpdateExpression: 'SET completed = :completed, pending_quantity = :pending_quantity',
-            ExpressionAttributeValues: {
-              ':completed': 'false',
-              ':pending_quantity': 0,
-            },
-          };
-          
-          await dynamoDb.send(new UpdateCommand(updateParams));
-          console.log(`🔄 Reset daily activity: ${activity.activityName}`);
-          resetCount++;
-          
-        } else if (['weekly', 'monthly'].includes(repeatType)) {
-          // Mark weekly/monthly as completed = 'true' and reset pending_quantity = 0
-          const updateParams = {
-            TableName: 'betterkid_v2',
-            Key: {
-              partitionKey: activity.partitionKey,
-              sortKey: activity.sortKey,
-            },
-            UpdateExpression: 'SET completed = :completed, pending_quantity = :pending_quantity',
-            ExpressionAttributeValues: {
-              ':completed': 'true',
-              ':pending_quantity': 0,
-            },
-          };
-          
-          await dynamoDb.send(new UpdateCommand(updateParams));
-          console.log(`✅ Completed ${repeatType} activity: ${activity.activityName}`);
-        } else {
-          // For other repeat types, just reset pending_quantity to 0
-          const updateParams = {
-            TableName: 'betterkid_v2',
-            Key: {
-              partitionKey: activity.partitionKey,
-              sortKey: activity.sortKey,
-            },
-            UpdateExpression: 'SET pending_quantity = :pending_quantity',
-            ExpressionAttributeValues: {
-              ':pending_quantity': 0,
-            },
-          };
-          
-          await dynamoDb.send(new UpdateCommand(updateParams));
-          console.log(`🔄 Reset pending quantity for: ${activity.activityName}`);
+        // Step 3b: Check completion status and apply awards/fines BEFORE reset (like manual reset)
+        console.log(`🏆 Step 3b: Checking completion status for user: ${userId}`);
+
+        // Use the activities we already have (like manual reset uses frontend state)
+        const dailyActivities = userActivities.filter(activity => activity.repeat === 'daily');
+
+        if (dailyActivities.length > 0) {
+          // Count uncompleted daily activities (activities that are still marked as 'false')
+          // Note: After pending money approval, activities with pending_quantity=0 and completed='false' are truly incomplete
+          // Activities that were done should have completed='pending' or 'true' or pending_quantity>0
+          const uncompletedDaily = dailyActivities.filter(activity =>
+            activity.completed === 'false' && (activity.pending_quantity || 0) === 0
+          );
+
+          console.log(`🏆 Daily activities summary for user ${userId}: ${dailyActivities.length} total, ${uncompletedDaily.length} uncompleted`);
+
+          // Debug: Log each activity's status
+          dailyActivities.forEach(activity => {
+            console.log(`🔍 Activity "${activity.activityName}": completed="${activity.completed}", pending_quantity=${activity.pending_quantity || 0}`);
+          });
+
+          const completeAward = user.completeAward || 0;
+          const uncompleteFine = user.uncompleteFine || 0;
+
+          if (uncompletedDaily.length === 0 && completeAward > 0) {
+            // All daily activities completed - give award
+            try {
+              const baseUrl = request.headers.get('host') ? `http://${request.headers.get('host')}` : 'http://localhost:3000';
+              const balanceResponse = await axios.get(`${baseUrl}/api/user-balance?userId=${encodeURIComponent(userId)}`);
+              const currentBalance = balanceResponse.data.balance || 0;
+              const newBalance = currentBalance + completeAward;
+
+              console.log(`🎉 Applying completion bonus: ${currentBalance} + ${completeAward} = ${newBalance}`);
+
+              await axios.put(`${baseUrl}/api/user-balance`, {
+                userId: userId,
+                balance: newBalance,
+                reason: `Daily completion bonus: All ${dailyActivities.length} activities completed (+$${completeAward}) via daily cron job`
+              });
+
+              completionBonusCount++;
+              console.log(`🎉 Applied completion bonus: $${completeAward}`);
+
+            } catch (err) {
+              console.error('❌ Error applying complete award:', err);
+              errorCount++;
+            }
+          } else if (uncompletedDaily.length > 0 && uncompleteFine > 0) {
+            // Some activities incomplete - apply fine
+            const totalFine = uncompletedDaily.length * uncompleteFine;
+            try {
+              const baseUrl = request.headers.get('host') ? `http://${request.headers.get('host')}` : 'http://localhost:3000';
+              const balanceResponse = await axios.get(`${baseUrl}/api/user-balance?userId=${encodeURIComponent(userId)}`);
+              const currentBalance = balanceResponse.data.balance || 0;
+              const newBalance = currentBalance - totalFine;
+
+              console.log(`💸 Applying incomplete fine: ${currentBalance} - ${totalFine} = ${newBalance}`);
+
+              await axios.put(`${baseUrl}/api/user-balance`, {
+                userId: userId,
+                balance: newBalance,
+                reason: `Daily incomplete fine: ${uncompletedDaily.length} activities not completed ($${uncompleteFine} per activity = $${totalFine} total) via daily cron job`
+              });
+
+              incompleteFineCount++;
+              console.log(`💸 Applied incomplete fine: $${totalFine}`);
+
+            } catch (err) {
+              console.error('❌ Error applying incomplete fine:', err);
+              errorCount++;
+            }
+          }
         }
-        
-        approvedCount++;
-        
-      } catch (activityError) {
-        console.error(`❌ Error processing activity ${activity.activityId}:`, activityError);
+
+        // Step 3c: Reset daily activities using the todos/reset API (like manual reset)
+        console.log(`🔄 Step 3c: Resetting daily activities for user: ${userId}`);
+
+        try {
+          const baseUrl = request.headers.get('host') ? `http://${request.headers.get('host')}` : 'http://localhost:3000';
+          const resetResponse = await axios.post(`${baseUrl}/api/todos/reset`, {
+            resetType: 'daily',
+            userId: userId
+          });
+
+          if (resetResponse.data.resetCount !== undefined) {
+            resetCount += resetResponse.data.resetCount;
+            console.log(`🔄 Reset ${resetResponse.data.resetCount} daily activities for user ${userId}`);
+          }
+        } catch (err) {
+          console.error(`❌ Error resetting activities for user ${userId}:`, err);
+          errorCount++;
+        }
+
+      } catch (userError) {
+        console.error(`❌ Error processing user ${user.partitionKey}:`, userError);
         errorCount++;
       }
     }
 
-    // Step 4: Clean up any pending money records for auto_reset users
-    console.log('💰 Step 4: Cleaning up pending money records for auto_reset users...');
-    
-    const pendingMoneyScanParams = {
-      TableName: 'betterkid_v2',
-      FilterExpression: 'begins_with(sortKey, :pendingPrefix)',
-      ExpressionAttributeValues: {
-        ':pendingPrefix': 'PENDING_MONEY#',
-      },
-    };
-
-    const pendingMoneyResult = await dynamoDb.send(new ScanCommand(pendingMoneyScanParams));
-    const allPendingMoneyRecords = pendingMoneyResult.Items || [];
-    
-    // Filter pending money records to only include those belonging to users with auto_reset enabled
-    const pendingMoneyRecords = allPendingMoneyRecords.filter(record => 
-      userPartitionKeys.includes(record.partitionKey)
-    );
-    
-    for (const record of pendingMoneyRecords) {
-      try {
-        const deleteParams = {
-          TableName: 'betterkid_v2',
-          Key: {
-            partitionKey: record.partitionKey,
-            sortKey: record.sortKey,
-          },
-        };
-        
-        await dynamoDb.send(new DeleteCommand(deleteParams));
-        console.log(`🗑️ Deleted pending money record: ${record.sortKey}`);
-      } catch (deleteError) {
-        console.error(`❌ Error deleting pending money record:`, deleteError);
-        errorCount++;
-      }
-    }
+    // Step 4: Summary (pending money cleanup is now handled per user above)
+    console.log('✅ All users processed successfully');
 
     const summary = {
       timestamp: new Date().toISOString(),
@@ -284,9 +296,11 @@ export async function GET(request: Request) {
       usersProcessed: usersProcessed,
       approvedActivities: approvedCount,
       resetDailyActivities: resetCount,
-      cleanedPendingRecords: pendingMoneyRecords.length,
+      cleanedPendingRecords: 0, // Now handled per user above
+      completionBonuses: completionBonusCount,
+      incompleteFines: incompleteFineCount,
       errors: errorCount,
-      totalProcessed: pendingActivities.length,
+      totalProcessed: repeatableActivities.length,
     };
 
     console.log('✅ Daily reset cron job completed:', summary);
