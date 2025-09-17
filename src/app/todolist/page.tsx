@@ -355,7 +355,7 @@ export default function TodoListPage() {
                   <h3 className="text-lg font-semibold mb-2">
                     <FontAwesomeIcon icon={faCog} className="text-xl" /> Reset Settings: 
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <label className="block text-xs font-medium text-green-700 uppercase tracking-wide">
                         Complete Award
@@ -391,9 +391,12 @@ export default function TodoListPage() {
                         />
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 mt-3">
-                    <span className="text-sm text-gray-700">Auto Reset:</span>
+
+                    <div className="space-y-2">
+                    <label className="block text-xs font-medium uppercase tracking-wide">
+                    Auto Reset on 22:00
+                      </label>
+                      <div className="flex items-center gap-3">
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
@@ -401,11 +404,14 @@ export default function TodoListPage() {
                         onChange={(e) => handleAutoResetChange(e.target.checked)}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-300"></div>
+                      <div className="w-16 h-8 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[3px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-7 after:w-7 after:transition-all peer-checked:bg-blue-300"></div>
                     </label>
-                    <span className="text-xs text-gray-600 ml-1">{autoReset ? 'ON' : 'OFF'}</span>
-                    <span className='pl-2'>Auto Reset function is coming soon.</span>
+                    <div className="text-xs text-gray-600 font-medium">{autoReset ? 'ON' : 'OFF'}</div>
                   </div>
+                  </div>
+
+                  </div>
+
                 </div>
               ) : (
                 <div className="flex items-center justify-between grid grid-cols-1 sm:grid-cols-2 gap-6 ">
