@@ -546,24 +546,16 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               </div>
             </div>
       <div className="flex flex-row gap-2">
-            {editMode ? (
+
               <Link href="/approve-pending" className="block group">
                 <div className="background-colour-2 text-black px-6 py-3 rounded-lg shadow-md text-white hover:opacity-80 transition-opacity cursor-pointer">
                   <div className="text-center">
                     <div className="text-sm font-medium">Pending Money</div>
                     <div className="text-2xl font-bold">${pendingAmount.toFixed(2)}</div>
-                    <div className="text-xs opacity-75 mt-1">Click to manage</div>
+            
                   </div>
                 </div>
               </Link>
-            ) : (
-              <div className="background-colour-2 text-black px-6 py-3 rounded-lg shadow-md text-white">
-                <div className="text-center">
-                  <div className="text-sm font-medium">Pending Rewards</div>
-                  <div className="text-2xl font-bold">${pendingAmount.toFixed(2)}</div>
-                </div>
-              </div>
-            )}
 
             {editMode ? (
               <Link href="/edit-coins" className="block group">
@@ -571,7 +563,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                   <div className="text-center">
                     <div className="text-sm font-medium">Current Balance</div>
                     <div className="text-2xl font-bold">${balance?.toFixed(2)}</div>
-                    <div className="text-xs opacity-75 mt-1">Click to edit</div>
+
                   </div>
                 </div>
               </Link>

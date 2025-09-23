@@ -5,6 +5,8 @@ import axios from 'axios';
 import { useAuth } from '@/hooks/useAuth';
 import { useEditMode } from '@/hooks/useEditMode';
 import { usePendingMoney } from '@/hooks/usePendingMoney';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 interface PendingMoney {
   pendingId: string;
@@ -55,13 +57,7 @@ export default function ApprovePendingPage() {
     }
   }, [isAuthenticated, userId]);
 
-  // Redirect if not in edit mode
-  useEffect(() => {
-    if (isAuthenticated !== null && isAuthenticated && !editMode) {
-      console.log('Access denied: Approve Pending requires edit mode');
-      router.push('/behaviors');
-    }
-  }, [isAuthenticated, editMode, router]);
+  // No redirect based on edit mode - allow viewing in any mode
 
   const handleApprovePending = async (pendingId: string) => {
     if (!userId) return;
@@ -120,7 +116,7 @@ export default function ApprovePendingPage() {
 
   const handleDeletePending = async (pendingId: string) => {
     if (!userId) return;
-    
+
     try {
       console.log('Deleting pending money:', pendingId);
       await axios.delete(`/api/pending-money/${pendingId}`, {
@@ -129,16 +125,43 @@ export default function ApprovePendingPage() {
       console.log('Pending money deleted');
       setSuccess('Pending money deleted successfully');
       setError('');
-      
+
       // Refresh pending money
       const pendingResponse = await axios.get(`/api/pending-money?userId=${encodeURIComponent(userId)}`);
       setPendingMoney(pendingResponse.data || []);
-      
+
       // Refresh the global pending money context
       refreshPendingMoney();
     } catch (err: any) {
       console.error('Failed to delete pending money:', err);
       setError(err.response?.data?.error || 'Failed to delete pending money');
+    }
+  };
+
+  const handleDenyAll = async () => {
+    if (pendingMoney.length === 0 || !userId) return;
+
+    try {
+      console.log('Denying all pending money');
+      // Delete all pending items
+      await Promise.all(
+        pendingMoney.map(item =>
+          axios.delete(`/api/pending-money/${item.pendingId}`, {
+            headers: { 'x-userid': userId }
+          })
+        )
+      );
+      console.log('All pending money denied');
+      setSuccess('All pending rewards have been denied');
+      setError('');
+
+      setPendingMoney([]);
+
+      // Refresh the global pending money context
+      refreshPendingMoney();
+    } catch (err: any) {
+      console.error('Failed to deny all pending money:', err);
+      setError(err.response?.data?.error || 'Failed to deny all pending money');
     }
   };
 
@@ -150,9 +173,7 @@ export default function ApprovePendingPage() {
     return null; // Redirect handled by useAuth
   }
 
-  if (!editMode) {
-    return <div className="flex items-center justify-center min-h-screen text-gray-600">Redirecting...</div>;
-  }
+  // Allow viewing in any mode
 
   const totalPendingAmount = pendingMoney.reduce((sum, item) => sum + item.amount, 0);
 
@@ -178,12 +199,22 @@ export default function ApprovePendingPage() {
             <h2 className="text-xl font-semibold text-yellow-800">
               🏆 Pending Rewards (${totalPendingAmount.toFixed(2)})
             </h2>
-            <button
-              onClick={handleApproveAll}
-              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
-            >
-              Approve All
-            </button>
+            <div className="flex gap-2">
+              {editMode && (
+                <button
+                  onClick={handleApproveAll}
+                  className="btn-1 px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
+                >
+                  Approve All
+                </button>
+              )}
+              <button
+                onClick={handleDenyAll}
+                className="btn-2 px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
+              >
+                Deny All
+              </button>
+            </div>
           </div>
           <div className="space-y-3">
             {pendingMoney.map((item) => (
@@ -196,17 +227,19 @@ export default function ApprovePendingPage() {
                     </p>
                   </div>
                   <div className="flex gap-2 ml-4">
-                    <button
-                      onClick={() => handleApprovePending(item.pendingId)}
-                      className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition-colors"
-                    >
-                      Approve
-                    </button>
+                    {editMode && (
+                      <button
+                        onClick={() => handleApprovePending(item.pendingId)}
+                        className="btn-1 px-3 py-1 rounded text-sm hover:bg-green-600 transition-colors"
+                      >
+                        <FontAwesomeIcon icon={faCheck} className="text-xs" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDeletePending(item.pendingId)}
-                      className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 transition-colors"
+                      className="btn-2 px-3 py-1 rounded text-sm hover:bg-red-600 transition-colors"
                     >
-                      Deny
+                      <FontAwesomeIcon icon={faTimes} className="text-xs" />
                     </button>
                   </div>
                 </div>
