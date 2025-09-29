@@ -32,6 +32,7 @@ export default function TodoListPage() {
   const [uncompleteFine, setUncompleteFine] = useState(0);
   const [autoReset, setAutoReset] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && userId) {
@@ -458,6 +459,17 @@ export default function TodoListPage() {
 
         </div>
         
+        {/* Loading Popup */}
+        {isResetting && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-8 max-w-sm mx-4 text-center">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <h3 className="text-lg font-semibold mb-2">Running Daily Reset</h3>
+              <p className="text-gray-600">Please wait while we process your daily reset...</p>
+            </div>
+          </div>
+        )}
+
         {/* Daily Reset Button - Only in Edit Mode */}
         {editMode && (
 
@@ -473,10 +485,12 @@ export default function TodoListPage() {
                   'Note: This only affects activities shown on this todo page.\n' +
                   'This action cannot be undone.'
                 );
-                
+
                 if (!confirmed) {
                   return;
                 }
+
+                setIsResetting(true);
 
                 try {
                   // Step 1: Approve only todo page activities (activities with repeat schedules)
@@ -570,14 +584,17 @@ export default function TodoListPage() {
                   
                   if (response.data.resetCount !== undefined) {
                     const successMessage = `✅ Daily Reset Completed!\n\n• Approved ${approvedCount} pending rewards\n• Reset ${response.data.resetCount} daily activities${awardMessage}`;
+                    setIsResetting(false);
                     alert(successMessage);
-                    
+
                     // Refresh the page after successful reset
                     window.location.reload();
                   } else {
+                    setIsResetting(false);
                     alert('❌ Daily reset failed - Please try again');
                   }
                 } catch (error: any) {
+                  setIsResetting(false);
                   console.error('Daily reset error:', error);
                   alert(`❌ Daily reset failed: ${error.response?.data?.error || 'Unknown error'}`);
                 }
