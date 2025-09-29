@@ -33,6 +33,7 @@ export default function TodoListPage() {
   const [autoReset, setAutoReset] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [resetComplete, setResetComplete] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && userId) {
@@ -459,13 +460,32 @@ export default function TodoListPage() {
 
         </div>
         
-        {/* Loading Popup */}
-        {isResetting && (
+        {/* Loading/Success Popup */}
+        {(isResetting || resetComplete) && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-8 max-w-sm mx-4 text-center">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <h3 className="text-lg font-semibold mb-2">Running Daily Reset</h3>
-              <p className="text-gray-600">Please wait while we process your daily reset...</p>
+              {resetComplete ? (
+                <>
+                  <div className="text-green-500 text-6xl mb-4">✅</div>
+                  <h3 className="text-lg font-semibold mb-2 text-green-700">Daily Reset Completed!</h3>
+                  <p className="text-gray-600 mb-4">Your daily activities have been successfully reset.</p>
+                  <button
+                    onClick={() => {
+                      setResetComplete(false);
+                      window.location.reload();
+                    }}
+                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  >
+                    Continue
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <h3 className="text-lg font-semibold mb-2">Running Daily Reset</h3>
+                  <p className="text-gray-600">Please wait while we process your daily reset...</p>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -583,12 +603,8 @@ export default function TodoListPage() {
                   });
                   
                   if (response.data.resetCount !== undefined) {
-                    const successMessage = `✅ Daily Reset Completed!\n\n• Approved ${approvedCount} pending rewards\n• Reset ${response.data.resetCount} daily activities${awardMessage}`;
                     setIsResetting(false);
-                    alert(successMessage);
-
-                    // Refresh the page after successful reset
-                    window.location.reload();
+                    setResetComplete(true);
                   } else {
                     setIsResetting(false);
                     alert('❌ Daily reset failed - Please try again');

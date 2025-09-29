@@ -5,7 +5,11 @@ import axios from 'axios';
 
 export async function GET(request: Request) {
   try {
-    console.log('🕙 Daily reset cron job started at', new Date().toISOString());
+    const now = new Date();
+    const nowUTC = now.toISOString();
+    const nowLocal = now.toLocaleString('en-AU', { timeZone: 'Australia/Sydney' });
+    console.log('🕙 Daily reset cron job started at', nowUTC, '(UTC)');
+    console.log('🕙 Local time (Australia/Sydney):', nowLocal);
     
     // Check if this is a cron job request or a manual request
     const authHeader = request.headers.get('authorization');
