@@ -1,0 +1,23 @@
+name: Daily Reset Cron Job
+
+on:
+  schedule:
+    # Runs daily at 13:00 UTC (same as your Vercel cron)
+    - cron: '0 13 * * *'
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  daily-reset:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Call Daily Reset API
+        run: |
+          curl -X GET "${{ secrets.VERCEL_URL }}/api/cron/daily-reset" \
+            -H "Content-Type: application/json" \
+            --fail-with-body \
+            --max-time 30
+        continue-on-error: false
+
+      - name: Log completion
+        run: echo "Daily reset cron job completed at $(date)"
