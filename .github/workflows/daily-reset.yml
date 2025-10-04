@@ -3,7 +3,7 @@ name: Daily Reset Cron Job
 on:
   schedule:
     # Runs daily at 13:00 UTC (same as your Vercel cron)
-    - cron: '0 13 * * *'
+    - cron: '0 10 * * *'
   workflow_dispatch: # Allows manual triggering
 
 jobs:
